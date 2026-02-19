@@ -22,7 +22,10 @@ detect_repo() {
     REPO="elahti/deneb"
     return
   fi
-  REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
+  REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner) || {
+    echo "detect_repo: failed to detect repository (is gh authenticated?)" >&2; exit 1;
+  }
+  [[ -n "$REPO" ]] || { echo "detect_repo: no repository found" >&2; exit 1; }
 }
 
 detect_repo

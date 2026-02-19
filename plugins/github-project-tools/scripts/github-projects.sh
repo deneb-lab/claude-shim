@@ -37,17 +37,24 @@ detect_repo() {
     REPO="elahti/deneb"
     return
   fi
-  REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
+  REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner) || {
+    echo "detect_repo: failed to detect repository (is gh authenticated?)" >&2; exit 1;
+  }
+  [[ -n "$REPO" ]] || { echo "detect_repo: no repository found" >&2; exit 1; }
 }
 
 detect_project() {
   if [[ -n "$PROJECT_ID" ]]; then return; fi
   detect_repo
   local owner="${REPO%%/*}"
+  # Picks the first project for the owner
   local project_json
   project_json=$(gh project list --owner "$owner" --format json --limit 1)
   PROJECT_NUMBER=$(echo "$project_json" | jq -r '.projects[0].number')
   PROJECT_ID=$(echo "$project_json" | jq -r '.projects[0].id')
+  [[ "$PROJECT_NUMBER" != "null" && -n "$PROJECT_NUMBER" ]] || {
+    echo "detect_project: no projects found for owner '$owner'" >&2; exit 1;
+  }
 }
 
 detect_status_field() {
@@ -57,6 +64,9 @@ detect_status_field() {
   local fields_json
   fields_json=$(gh project field-list "$PROJECT_NUMBER" --owner "$owner" --format json)
   STATUS_FIELD=$(echo "$fields_json" | jq -r '.fields[] | select(.name == "Status") | .id')
+  [[ -n "$STATUS_FIELD" ]] || {
+    echo "detect_status_field: no Status field found in project $PROJECT_NUMBER" >&2; exit 1;
+  }
   # Populate STATUS_OPTIONS from the Status field's single-select options
   while IFS= read -r line; do
     local name id
