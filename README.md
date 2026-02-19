@@ -22,8 +22,9 @@ Add this marketplace to Claude Code:
 ```
 
 **Skills:**
-- `github:add-issue` — Create a GitHub issue from conversation context and add it to the project board
-- `github:implement-issue` — Implement a GitHub issue with full lifecycle management (dates, statuses, closing)
+- `github-projects:add-issue` — Create a GitHub issue from conversation context and add it to the project board
+- `github-projects:start-implementation` — Start implementing a GitHub issue (assigns, sets dates/status, creates draft PR, presents context)
+- `github-projects:end-implementation` — Close a GitHub issue (sets end date, done status, closes issue, updates parent lifecycle)
 
 ---
 
@@ -53,9 +54,11 @@ claude-shim/
 │   │   ├── scripts/
 │   │   │   └── github-projects.sh
 │   │   └── skills/
-│   │       ├── github-add-issue/
+│   │       ├── github-projects-add-issue/
 │   │       │   └── SKILL.md
-│   │       └── github-implement-issue/
+│   │       ├── github-projects-start-implementation/
+│   │       │   └── SKILL.md
+│   │       └── github-projects-end-implementation/
 │   │           └── SKILL.md
 │   └── trivy-audit/
 │       ├── .claude-plugin/
