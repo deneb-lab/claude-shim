@@ -22,9 +22,9 @@ Add this marketplace to Claude Code:
 ```
 
 **Skills:**
-- `github-projects:add-issue` — Create a GitHub issue from conversation context and add it to the project board
-- `github-projects:start-implementation` — Start implementing a GitHub issue (assigns, sets dates/status, creates draft PR, presents context)
-- `github-projects:end-implementation` — Close a GitHub issue (sets end date, done status, closes issue, updates parent lifecycle)
+- `github-project-tools:add-issue` — Create a GitHub issue from conversation context and add it to the project board
+- `github-project-tools:start-implementation` — Start implementing a GitHub issue (assigns, sets dates/status, creates draft PR, presents context)
+- `github-project-tools:end-implementation` — Close a GitHub issue (sets end date, done status, closes issue, updates parent lifecycle)
 
 ---
 
@@ -54,11 +54,11 @@ claude-shim/
 │   │   ├── scripts/
 │   │   │   └── github-projects.sh
 │   │   └── skills/
-│   │       ├── github-projects-add-issue/
+│   │       ├── add-issue/
 │   │       │   └── SKILL.md
-│   │       ├── github-projects-start-implementation/
+│   │       ├── start-implementation/
 │   │       │   └── SKILL.md
-│   │       └── github-projects-end-implementation/
+│   │       └── end-implementation/
 │   │           └── SKILL.md
 │   └── trivy-audit/
 │       ├── .claude-plugin/
@@ -68,7 +68,7 @@ claude-shim/
 │       │   ├── trivy-audit-gather.sh
 │       │   └── trivy-audit-gh.sh
 │       └── skills/
-│           └── trivy-audit-report/
+│           └── report/
 │               ├── SKILL.md
 │               └── prompts/
 │                   ├── config-auditor.md
