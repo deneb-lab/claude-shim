@@ -114,6 +114,26 @@ Before making any changes, note the current status of the issue (and parent if a
      ```
    - If no, skip this step.
 
+5. **Ask the user** how they want to set up their workspace. Suggest a branch name based on the issue: `feat/<issue-number>-<slug>` where the slug is the issue title lowercased, spaces replaced by hyphens, special characters removed.
+
+   Offer three options:
+
+   a. **Feature branch** (recommended) — create and switch to the branch:
+      ```bash
+      git checkout -b <branch-name>
+      ```
+
+   b. **Git worktree** — ask which directory:
+      - `../<repoName>__worktrees/<branch-name>` (recommended — sibling directory, use `basename` of `git rev-parse --show-toplevel` for repoName)
+      - `.worktrees/<branch-name>` (project-local, hidden)
+
+      Then create the worktree:
+      ```bash
+      git worktree add <path> -b <branch-name>
+      ```
+
+   c. **Stay on current branch** — skip workspace setup entirely.
+
 ## Phase 4: Implement
 
 1. Present the issue title and body to the user so they have full context.
