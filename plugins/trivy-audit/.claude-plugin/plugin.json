@@ -1,5 +1,5 @@
 {
-  "name": "trivy-audit-report",
+  "name": "trivy-audit",
   "description": "Trivy security audit coordinator — CVE analysis, version staleness, config audits with agent team",
   "version": "0.1.0",
   "author": {
