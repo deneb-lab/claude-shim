@@ -1,0 +1,11 @@
+{
+  "name": "trivy-audit-report",
+  "description": "Trivy security audit coordinator — CVE analysis, version staleness, config audits with agent team",
+  "version": "0.1.0",
+  "author": {
+    "name": "elahti"
+  },
+  "repository": "https://github.com/elahti/claude-shim",
+  "license": "MIT",
+  "keywords": ["trivy", "security", "audit", "vulnerability", "kubernetes"]
+}

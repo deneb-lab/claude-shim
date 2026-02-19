@@ -1,0 +1,26 @@
+{
+  "name": "claude-shim-marketplace",
+  "owner": {
+    "name": "elahti"
+  },
+  "metadata": {
+    "description": "Claude Code plugins for project management, security auditing, and automation",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "github-project-tools",
+      "source": "./plugins/github-project-tools",
+      "description": "GitHub issue creation and implementation with project board lifecycle management",
+      "version": "0.1.0",
+      "strict": true
+    },
+    {
+      "name": "trivy-audit-report",
+      "source": "./plugins/trivy-audit-report",
+      "description": "Trivy security audit coordinator — CVE analysis, version staleness, config audits with agent team",
+      "version": "0.1.0",
+      "strict": true
+    }
+  ]
+}
