@@ -1,5 +1,5 @@
 ---
-name: github-projects:start-implementation
+name: start-implementation
 description: Start implementing a GitHub issue - assigns, sets dates/status, creates draft PR, and presents issue context
 ---
 

@@ -1,5 +1,5 @@
 ---
-name: trivy-audit:report
+name: report
 description: Audit Trivy vulnerabilities, check version staleness, review config audits, and create GitHub issues in the Deneb project
 ---
 

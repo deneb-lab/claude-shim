@@ -1,5 +1,5 @@
 ---
-name: github-projects:end-implementation
+name: end-implementation
 description: Close a GitHub issue - sets end date, done status, closes issue, updates parent lifecycle
 ---
 
