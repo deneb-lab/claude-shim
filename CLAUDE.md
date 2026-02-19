@@ -30,7 +30,7 @@ Claude Code plugin marketplace monorepo. Plugins are self-contained directories 
 ## Skill Conventions
 
 - **Frontmatter:** Every SKILL.md starts with YAML frontmatter: `name` and `description`
-- **Naming:** `plugin-prefix:action-name` (e.g., `github-projects:add-issue`, `trivy-audit:report`)
+- **Naming:** Bare action name in frontmatter and directory (e.g., `add-issue`, `report`). Cross-references use fully-qualified `plugin-name:skill-name` form (e.g., `github-project-tools:add-issue`).
 - **Paths:** Reference scripts as `scripts/<name>.sh` (plugin-relative)
 - **Prompts:** Sub-agent prompts go in `prompts/` subdirectory next to SKILL.md
 
