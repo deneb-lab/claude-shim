@@ -1,5 +1,5 @@
 ---
-name: github:add-issue
+name: github-projects:add-issue
 description: Create a GitHub issue from conversation context and add it to the project board with Todo status
 ---
 
