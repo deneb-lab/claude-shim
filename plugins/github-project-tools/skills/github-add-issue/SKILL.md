@@ -15,8 +15,8 @@ Read the conversation context and any arguments provided. You need:
 
 If the context is insufficient, ask the user for clarification.
 
-The default repository is `elahti/deneb`. The user can specify a different repo.
-The default project is https://github.com/users/elahti/projects/1.
+The default repository is the current git repository (auto-detected by the script). The user can specify a different repo.
+The default project is auto-detected from the repo owner's GitHub projects.
 
 ## Phase 2: Create Issue
 

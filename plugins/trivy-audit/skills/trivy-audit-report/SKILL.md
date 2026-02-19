@@ -38,9 +38,9 @@ Verify the script succeeded by checking its exit code and summary output.
 
 Read the prompt files and spawn 3 teammates **in parallel**:
 
-1. Read `.claude/skills/trivy-audit-report/prompts/cve-analyst.md`
-2. Read `.claude/skills/trivy-audit-report/prompts/staleness-researcher.md`
-3. Read `.claude/skills/trivy-audit-report/prompts/config-auditor.md`
+1. Read `prompts/cve-analyst.md`
+2. Read `prompts/staleness-researcher.md`
+3. Read `prompts/config-auditor.md`
 
 Then spawn all 3 using the Task tool:
 
@@ -70,7 +70,7 @@ If a teammate reports an issue, help them resolve it by sending a message with g
 
 Once all 3 analysis tasks are completed:
 
-1. Read `.claude/skills/trivy-audit-report/prompts/report-writer.md`
+1. Read `prompts/report-writer.md`
 2. Spawn the report-writer:
 
 ```
