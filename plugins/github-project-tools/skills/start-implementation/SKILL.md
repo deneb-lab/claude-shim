@@ -1,6 +1,7 @@
 ---
 name: start-implementation
 description: Start implementing a GitHub issue - assigns, sets dates/status, creates draft PR, and presents issue context
+allowed-tools: Bash(github-projects.sh:*), Bash(find:*), Bash(date:*), Bash(git:*), Bash(basename:*)
 ---
 
 # GitHub Projects — Start Implementation
