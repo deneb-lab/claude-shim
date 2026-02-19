@@ -1,6 +1,7 @@
 ---
 name: end-implementation
 description: Close a GitHub issue - sets end date, done status, closes issue, updates parent lifecycle
+allowed-tools: Bash(github-projects.sh:*), Bash(find:*), Bash(date:*)
 ---
 
 # GitHub Projects — End Implementation
