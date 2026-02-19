@@ -9,6 +9,8 @@
 #   issue-create --title T --body B       Create issue (optional --label)
 #   issue-edit <number> --body B          Update issue body
 #   issue-close <number>                  Close issue as completed
+#   issue-assign <number>                 Assign issue to current user
+#   pr-create-draft <number>              Create draft PR linked to issue
 #   get-project-item <node-id>            Get project item ID for an issue
 #   get-project-fields                    Get date field IDs
 #   get-start-date <node-id>              Get project item ID + start date
@@ -160,6 +162,21 @@ cmd_issue_close() {
   gh issue close "$1" --repo "$REPO" --reason completed
 }
 
+cmd_issue_assign() {
+  [[ -n "${1:-}" ]] || { echo "issue-assign: <number> required" >&2; exit 1; }
+  gh issue edit "$1" --repo "$REPO" --add-assignee @me
+}
+
+cmd_pr_create_draft() {
+  [[ -n "${1:-}" ]] || { echo "pr-create-draft: <number> required" >&2; exit 1; }
+  local number="$1"
+  local title
+  title=$(gh issue view "$number" --repo "$REPO" --json title --jq '.title')
+  gh pr create --repo "$REPO" --draft \
+    --title "$title" \
+    --body "Closes #${number}"
+}
+
 # --- GraphQL queries ---
 
 cmd_get_project_item() {
@@ -287,6 +304,8 @@ case "${1:-}" in
   issue-create)         detect_repo; shift; cmd_issue_create "$@" ;;
   issue-edit)           detect_repo; shift; cmd_issue_edit "$@" ;;
   issue-close)          detect_repo; shift; cmd_issue_close "$@" ;;
+  issue-assign)         detect_repo; shift; cmd_issue_assign "$@" ;;
+  pr-create-draft)      detect_repo; shift; cmd_pr_create_draft "$@" ;;
   get-project-item)     init; shift; cmd_get_project_item "$@" ;;
   get-project-fields)   init; shift; cmd_get_project_fields "$@" ;;
   get-start-date)       init; shift; cmd_get_start_date "$@" ;;
