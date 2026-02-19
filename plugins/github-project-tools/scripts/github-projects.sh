@@ -4,6 +4,7 @@
 # Usage: scripts/github-projects.sh <subcommand> [args...]
 #
 # Subcommands:
+#   preflight                             Verify gh CLI, auth, and scopes
 #   issue-view <number> [gh-flags...]     View issue (passthrough to gh issue view)
 #   issue-create --title T --body B       Create issue (optional --label)
 #   issue-edit <number> --body B          Update issue body
@@ -87,6 +88,36 @@ init() {
 graphql() {
   local query="$1"; shift
   gh api graphql -f query="$query" "$@"
+}
+
+# --- Preflight ---
+
+cmd_preflight() {
+  # Check gh CLI exists
+  if ! command -v gh &>/dev/null; then
+    echo "FAIL: gh CLI not found. Install from https://cli.github.com/" >&2
+    exit 1
+  fi
+
+  # Check gh auth
+  if ! gh auth status &>/dev/null; then
+    echo "FAIL: gh not authenticated. Run 'gh auth login'" >&2
+    exit 1
+  fi
+
+  # Check scopes
+  local scopes
+  scopes=$(gh auth status 2>&1)
+  if ! echo "$scopes" | grep -q "repo"; then
+    echo "FAIL: 'repo' scope not granted. Run 'gh auth refresh -s repo'" >&2
+    exit 1
+  fi
+  if ! echo "$scopes" | grep -q "project"; then
+    echo "FAIL: 'project' scope not granted. Run 'gh auth refresh -s project'" >&2
+    exit 1
+  fi
+
+  echo "OK: gh CLI authenticated with repo + project scopes"
 }
 
 # --- Issue operations ---
@@ -250,22 +281,21 @@ cmd_set_date() {
 
 # --- Main dispatch ---
 
-init
-
 case "${1:-}" in
-  issue-view)         shift; cmd_issue_view "$@" ;;
-  issue-create)       shift; cmd_issue_create "$@" ;;
-  issue-edit)         shift; cmd_issue_edit "$@" ;;
-  issue-close)        shift; cmd_issue_close "$@" ;;
-  get-project-item)   shift; cmd_get_project_item "$@" ;;
-  get-project-fields) shift; cmd_get_project_fields "$@" ;;
-  get-start-date)     shift; cmd_get_start_date "$@" ;;
-  add-to-project)     shift; cmd_add_to_project "$@" ;;
-  set-status)         shift; cmd_set_status "$@" ;;
-  set-date)           shift; cmd_set_date "$@" ;;
-  get-parent)         shift; cmd_get_parent "$@" ;;
-  count-open-sub-issues) shift; cmd_count_open_sub_issues "$@" ;;
-  table-set-status)   shift; cmd_table_set_status "$@" ;;
+  preflight)            shift; cmd_preflight "$@" ;;
+  issue-view)           detect_repo; shift; cmd_issue_view "$@" ;;
+  issue-create)         detect_repo; shift; cmd_issue_create "$@" ;;
+  issue-edit)           detect_repo; shift; cmd_issue_edit "$@" ;;
+  issue-close)          detect_repo; shift; cmd_issue_close "$@" ;;
+  get-project-item)     init; shift; cmd_get_project_item "$@" ;;
+  get-project-fields)   init; shift; cmd_get_project_fields "$@" ;;
+  get-start-date)       init; shift; cmd_get_start_date "$@" ;;
+  add-to-project)       init; shift; cmd_add_to_project "$@" ;;
+  set-status)           init; shift; cmd_set_status "$@" ;;
+  set-date)             init; shift; cmd_set_date "$@" ;;
+  get-parent)           detect_repo; shift; cmd_get_parent "$@" ;;
+  count-open-sub-issues) detect_repo; shift; cmd_count_open_sub_issues "$@" ;;
+  table-set-status)     init; shift; cmd_table_set_status "$@" ;;
   *)
     echo "Usage: $0 <subcommand> [args...]" >&2
     echo "Run '$0 <subcommand> --help' for subcommand help" >&2
