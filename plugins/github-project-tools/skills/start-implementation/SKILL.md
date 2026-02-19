@@ -124,9 +124,9 @@ When the user indicates they are done (or you have completed the implementation)
 
 **"Implementation complete. Run end-implementation to close the issue?"**
 
-- **If yes:** Invoke `github-projects:end-implementation` via the Skill tool. State (NODE_ID, ITEM_ID, field IDs, parent info) will carry through in the conversation context.
+- **If yes:** Invoke `github-project-tools:end-implementation` via the Skill tool. State (NODE_ID, ITEM_ID, field IDs, parent info) will carry through in the conversation context.
 
-- **If no:** Tell the user they can run `/github-projects:end-implementation` later to close the issue and update the project board.
+- **If no:** Tell the user they can run `/github-project-tools:end-implementation` later to close the issue and update the project board.
 
 - **If the implementation cannot be completed:** Present the user with two options:
   - **Option A: Do nothing** — Leave the issue assigned, dates set, and status as in-progress. The user can continue later.
