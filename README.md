@@ -25,42 +25,45 @@ Add this marketplace to Claude Code:
 - `github:add-issue` — Create a GitHub issue from conversation context and add it to the project board
 - `github:implement-issue` — Implement a GitHub issue with full lifecycle management (dates, statuses, closing)
 
-**Dependencies:** Requires `scripts/github-projects.sh` in the target project.
-
 ---
 
-### Trivy Audit Report
+### Trivy Audit
 
 **Description:** Trivy security audit coordinator — spawns an agent team for CVE analysis, version staleness research, config audits, and GitHub issue creation
 
 **Install:**
 ```bash
-/plugin install trivy-audit-report@claude-shim-marketplace
+/plugin install trivy-audit@claude-shim-marketplace
 ```
 
 **Skills:**
 - `trivy-audit:report` — Run a comprehensive security audit using an agent team with 4 specialized analysts
-
-**Dependencies:** Requires `scripts/trivy-audit-gather.sh`, `scripts/trivy-audit-gh.sh`, and `scripts/github-projects.sh` in the target project.
 
 ## Marketplace Structure
 
 ```
 claude-shim/
 ├── .claude-plugin/
-│   └── marketplace.json              # Plugin catalog
+│   └── marketplace.json
+├── CLAUDE.md
 ├── plugins/
 │   ├── github-project-tools/
 │   │   ├── .claude-plugin/
 │   │   │   └── plugin.json
+│   │   ├── scripts/
+│   │   │   └── github-projects.sh
 │   │   └── skills/
 │   │       ├── github-add-issue/
 │   │       │   └── SKILL.md
 │   │       └── github-implement-issue/
 │   │           └── SKILL.md
-│   └── trivy-audit-report/
+│   └── trivy-audit/
 │       ├── .claude-plugin/
 │       │   └── plugin.json
+│       ├── scripts/
+│       │   ├── github-projects.sh
+│       │   ├── trivy-audit-gather.sh
+│       │   └── trivy-audit-gh.sh
 │       └── skills/
 │           └── trivy-audit-report/
 │               ├── SKILL.md
@@ -74,7 +77,7 @@ claude-shim/
 
 ## Versioning
 
-Each plugin follows semantic versioning. The marketplace catalog (`marketplace.json`) references specific versions. Git tags use the format `plugin-name/vX.Y.Z`.
+Each plugin follows semantic versioning independently. Plugin versions are tracked in both `plugin.json` and `marketplace.json`. Git tags use the format `plugin-name/vX.Y.Z`.
 
 ## License
 
