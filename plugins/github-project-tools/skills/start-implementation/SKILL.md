@@ -136,8 +136,21 @@ Before making any changes, note the current status of the issue (and parent if a
 
 ## Phase 4: Implement
 
-1. Present the issue title and body to the user so they have full context.
-2. Follow any additional instructions the user provides for implementation.
+Present the issue context to the user:
+
+```
+Issue #<number>: <title>
+
+<body>
+```
+
+Then follow whatever additional instructions the user provided in `$ARGUMENTS` (everything after the issue number/URL). For example, the user may have written:
+
+- `<number> use superpowers:brainstorm to implement` → invoke that skill
+- `<number> just set up the issue, I'll implement manually` → stop after Phase 3 (do not present the issue or proceed further)
+- Any other instructions → follow them
+
+If no additional instructions were provided, proceed with implementation based on the issue description.
 
 ## Phase 5: Handoff
 
