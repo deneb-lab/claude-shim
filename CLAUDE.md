@@ -25,7 +25,6 @@ Claude Code plugin marketplace monorepo. Plugins are self-contained directories 
    ```
 2. Create skills under `plugins/<name>/skills/<skill-name>/SKILL.md`
 3. Add the plugin to `.claude-plugin/marketplace.json` in the `plugins` array
-4. Update `README.md`
 
 ## Skill Conventions
 
