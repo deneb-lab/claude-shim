@@ -9,6 +9,7 @@
 # Subcommands:
 #   preflight                             Verify gh CLI, auth, and scopes
 #   issue-view <number> [gh-flags...]     View issue (passthrough to gh issue view)
+#   issue-view-full <number>              View issue (JSON: id,number,title,body,state)
 #   issue-create --title T --body B       Create issue (optional --label)
 #   issue-edit <number> --body B          Update issue body
 #   issue-close <number>                  Close issue as completed
@@ -130,6 +131,10 @@ cmd_preflight() {
 
 cmd_issue_view() {
   gh issue view "$1" --repo "$REPO" "${@:2}"
+}
+
+cmd_issue_view_full() {
+  gh issue view "$1" --repo "$REPO" --json id,number,title,body,state
 }
 
 cmd_issue_create() {
@@ -328,6 +333,7 @@ done
 case "${1:-}" in
   preflight)            shift; cmd_preflight "$@" ;;
   issue-view)           detect_repo; shift; cmd_issue_view "$@" ;;
+  issue-view-full)      detect_repo; shift; cmd_issue_view_full "$@" ;;
   issue-create)         detect_repo; shift; cmd_issue_create "$@" ;;
   issue-edit)           detect_repo; shift; cmd_issue_edit "$@" ;;
   issue-close)          detect_repo; shift; cmd_issue_close "$@" ;;
