@@ -19,7 +19,7 @@ Start working on a GitHub issue: assign yourself, update project board dates and
 
 ## Phase 1: Setup
 
-The script auto-detects the current repository from the git remote, so no manual repo configuration is needed.
+The script auto-detects the current repository from the git remote. When `REPO_OVERRIDE` is set (see Phase 2), pass `--repo $REPO_OVERRIDE` before the subcommand in every script invocation to override auto-detection.
 
 1. Get project fields (date field IDs):
    ```bash
@@ -38,6 +38,13 @@ The script auto-detects the current repository from the git remote, so no manual
    - A full GitHub URL like `https://github.com/owner/repo/issues/42`
 
    Extract the issue number from whichever format is provided.
+
+   **If a full URL was provided**, also extract the `owner/repo` from the URL path. Save this as `REPO_OVERRIDE` (e.g., `elahti/deneb`). When `REPO_OVERRIDE` is set, **prepend `--repo $REPO_OVERRIDE` before the subcommand in every subsequent script invocation**. For example:
+   ```bash
+   scripts/github-projects.sh --repo elahti/deneb issue-view 42 --json id,number,title,body,state
+   ```
+
+   If only a plain issue number was provided, do not use `--repo` — the script will auto-detect the repository from the git remote.
 
 2. Fetch the issue details:
    ```bash

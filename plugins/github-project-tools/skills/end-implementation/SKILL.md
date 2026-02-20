@@ -9,8 +9,10 @@ allowed-tools: Bash(github-projects.sh:*), Bash(find:*), Bash(date:*)
 Close out a GitHub issue after implementation is complete: set the end date and done status on the project board, close the issue, and update the parent issue lifecycle if all sub-issues are resolved.
 
 This skill works in two modes:
-- **Handoff from start-implementation:** State (NODE_ID, ITEM_ID, field IDs, parent info) is already in the conversation context. Phases 1 and 2 are skipped.
+- **Handoff from start-implementation:** State (NODE_ID, ITEM_ID, field IDs, parent info, and REPO_OVERRIDE if set) is already in the conversation context. Phases 1 and 2 are skipped.
 - **Standalone invocation:** The user calls this skill directly. All state must be discovered from scratch.
+
+When `REPO_OVERRIDE` is set (either from start-implementation handoff or parsed from a URL in Phase 2), **prepend `--repo $REPO_OVERRIDE` before the subcommand in every script invocation** to override auto-detection.
 
 ## Phase 0: Preflight
 
@@ -48,6 +50,13 @@ Otherwise:
    - A full GitHub URL like `https://github.com/owner/repo/issues/42`
 
    Extract the issue number from whichever format is provided.
+
+   **If a full URL was provided**, also extract the `owner/repo` from the URL path. Save this as `REPO_OVERRIDE` (e.g., `elahti/deneb`). When `REPO_OVERRIDE` is set, **prepend `--repo $REPO_OVERRIDE` before the subcommand in every subsequent script invocation**. For example:
+   ```bash
+   scripts/github-projects.sh --repo elahti/deneb issue-view 42 --json id,number,title,body,state
+   ```
+
+   If only a plain issue number was provided, do not use `--repo` — the script will auto-detect the repository from the git remote.
 
 2. Fetch the issue details:
    ```bash

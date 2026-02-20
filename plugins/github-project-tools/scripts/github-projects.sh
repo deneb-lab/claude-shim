@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2016  # GraphQL queries use $var syntax (not bash expansions)
 # Shared GitHub Projects operations
-# Usage: scripts/github-projects.sh <subcommand> [args...]
+# Usage: scripts/github-projects.sh [--repo owner/repo] <subcommand> [args...]
+#
+# Global options:
+#   --repo owner/repo                     Override auto-detected repository
 #
 # Subcommands:
 #   preflight                             Verify gh CLI, auth, and scopes
@@ -297,6 +300,17 @@ cmd_set_date() {
 }
 
 # --- Main dispatch ---
+
+# Parse global options (before subcommand)
+while [[ "${1:-}" == --* ]]; do
+  case "$1" in
+    --repo)
+      [[ -n "${2:-}" ]] || { echo "--repo requires owner/repo argument" >&2; exit 1; }
+      REPO="$2"; shift 2
+      ;;
+    *) break ;;
+  esac
+done
 
 case "${1:-}" in
   preflight)            shift; cmd_preflight "$@" ;;
