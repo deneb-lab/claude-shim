@@ -40,6 +40,41 @@ Add this marketplace to Claude Code:
 **Skills:**
 - `trivy-audit:report` — Run a comprehensive security audit using an agent team with 4 specialized analysts
 
+---
+
+### Claude Code Hooks
+
+**Description:** Config-driven quality checks for edited files — formatting, linting, auto-fix via PostToolUse hooks
+
+**Install:**
+```bash
+/plugin install claude-code-hooks@claude-shim-marketplace
+```
+
+**Setup:** Create `.claude-shim.json` in your repo root:
+
+```json
+{
+  "quality-checks": {
+    "include": [
+      {
+        "pattern": "**/*.{js,jsx,ts,tsx}",
+        "commands": [
+          "npx prettier --write",
+          "npx eslint --fix",
+          "npx eslint"
+        ]
+      }
+    ],
+    "exclude": [
+      "node_modules"
+    ]
+  }
+}
+```
+
+**Requires:** [uv](https://docs.astral.sh/uv/) on PATH. The hook fails closed if uv is unavailable.
+
 ## Marketplace Structure
 
 ```
@@ -60,21 +95,41 @@ claude-shim/
 │   │       │   └── SKILL.md
 │   │       └── end-implementation/
 │   │           └── SKILL.md
-│   └── trivy-audit/
+│   ├── trivy-audit/
+│   │   ├── .claude-plugin/
+│   │   │   └── plugin.json
+│   │   ├── scripts/
+│   │   │   ├── github-projects.sh
+│   │   │   ├── trivy-audit-gather.sh
+│   │   │   └── trivy-audit-gh.sh
+│   │   └── skills/
+│   │       └── report/
+│   │           ├── SKILL.md
+│   │           └── prompts/
+│   │               ├── config-auditor.md
+│   │               ├── cve-analyst.md
+│   │               ├── staleness-researcher.md
+│   │               └── report-writer.md
+│   └── claude-code-hooks/
 │       ├── .claude-plugin/
 │       │   └── plugin.json
-│       ├── scripts/
-│       │   ├── github-projects.sh
-│       │   ├── trivy-audit-gather.sh
-│       │   └── trivy-audit-gh.sh
-│       └── skills/
-│           └── report/
-│               ├── SKILL.md
-│               └── prompts/
-│                   ├── config-auditor.md
-│                   ├── cve-analyst.md
-│                   ├── staleness-researcher.md
-│                   └── report-writer.md
+│       ├── hooks/
+│       │   └── hooks.json
+│       └── hook/
+│           ├── pyproject.toml
+│           ├── uv.lock
+│           ├── src/claude_code_hooks/
+│           │   ├── __init__.py
+│           │   ├── main.py
+│           │   ├── config.py
+│           │   ├── matcher.py
+│           │   └── runner.py
+│           └── tests/
+│               ├── __init__.py
+│               ├── test_config.py
+│               ├── test_matcher.py
+│               ├── test_runner.py
+│               └── test_main.py
 └── README.md
 ```
 
