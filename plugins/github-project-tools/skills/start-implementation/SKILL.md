@@ -1,12 +1,12 @@
 ---
 name: start-implementation
-description: Start implementing a GitHub issue - assigns, sets dates/status, creates draft PR, and presents issue context
+description: Start implementing a GitHub issue - assigns, sets dates/status, and presents issue context
 allowed-tools: Bash(github-projects.sh:*), Bash(find:*), Bash(date:*), Bash(git:*), Bash(basename:*)
 ---
 
 # GitHub Projects — Start Implementation
 
-Start working on a GitHub issue: assign yourself, update project board dates and status, optionally create a draft PR, then present the issue context so you can begin implementation.
+Start working on a GitHub issue: assign yourself, update project board dates and status, then present the issue context so you can begin implementation.
 
 ## Phase 0: Preflight
 
@@ -94,14 +94,7 @@ Before making any changes, note the current status of the issue (and parent if a
         scripts/github-projects.sh set-status "$PARENT_ITEM" in-progress
         ```
 
-5. Ask the user: "Create a draft PR linked to this issue?"
-   - If yes:
-     ```bash
-     scripts/github-projects.sh pr-create-draft <number>
-     ```
-   - If no, skip this step.
-
-6. **Set up the workspace.**
+5. **Set up the workspace.**
 
    First, check if the user is already on a non-main worktree:
    ```bash
