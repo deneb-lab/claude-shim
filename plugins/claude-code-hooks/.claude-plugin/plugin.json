@@ -1,0 +1,11 @@
+{
+  "name": "claude-code-hooks",
+  "description": "Config-driven quality checks for edited files — formatting, linting, auto-fix via PostToolUse hooks",
+  "version": "0.1.0",
+  "author": {
+    "name": "elahti"
+  },
+  "repository": "https://github.com/elahti/claude-shim",
+  "license": "MIT",
+  "keywords": ["hooks", "linting", "formatting", "quality", "automation"]
+}
