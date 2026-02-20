@@ -5,7 +5,7 @@
   },
   "metadata": {
     "description": "Claude Code plugins for project management, security auditing, and automation",
-    "version": "0.9.0"
+    "version": "0.10.0"
   },
   "plugins": [
     {
@@ -26,7 +26,7 @@
       "name": "claude-code-hooks",
       "source": "./plugins/claude-code-hooks",
       "description": "Config-driven quality checks for edited files — formatting, linting, auto-fix via PostToolUse hooks",
-      "version": "0.1.0"
+      "version": "0.2.0"
     }
   ]
 }
