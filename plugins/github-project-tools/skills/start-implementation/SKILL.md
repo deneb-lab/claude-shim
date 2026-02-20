@@ -127,7 +127,19 @@ Before making any changes, note the current status of the issue (and parent if a
      ```
    - If no, skip this step.
 
-6. **Ask the user** how they want to set up their workspace. Suggest a branch name based on the issue: `feat/<issue-number>-<slug>` where the slug is the issue title lowercased, spaces replaced by hyphens, special characters removed.
+6. **Set up the workspace.**
+
+   First, check if the user is already on a non-main worktree:
+   ```bash
+   git rev-parse --absolute-git-dir
+   ```
+   If the output contains `.git/worktrees/`, this is a secondary worktree. Then check the current branch:
+   ```bash
+   git rev-parse --abbrev-ref HEAD
+   ```
+   If the branch is not `main` (or whatever the default branch is), **skip the rest of this step** and tell the user: "Already on worktree branch `<branch>` — skipping workspace setup."
+
+   Otherwise, ask the user how they want to set up their workspace. Suggest a branch name based on the issue: `feat/<issue-number>-<slug>` where the slug is the issue title lowercased, spaces replaced by hyphens, special characters removed.
 
    Offer three options:
 
