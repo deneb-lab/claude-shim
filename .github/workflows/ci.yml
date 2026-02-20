@@ -1,0 +1,25 @@
+---
+name: CI
+"on": [push, pull_request]
+jobs:
+  lint:
+    runs-on: claude-shim-runner
+    container:
+      image: registry.phoebe.fi/claude-shim/ci:latest
+      credentials:
+        username: ${{ secrets.REGISTRY_USERNAME }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6
+
+      - name: Run shellcheck
+        run: |
+          find . -name '*.sh' -print0 | xargs -0 shellcheck
+
+      - name: Validate JSON files
+        run: |
+          for f in $(find . -name '*.json' -not -path './.git/*'); do
+            echo "Checking $f..."
+            jq . "$f" > /dev/null
+          done
