@@ -57,6 +57,7 @@ Claude Code plugin marketplace monorepo. Plugins are self-contained directories 
   3. Bump `metadata.version` in marketplace.json if the catalog changed
   4. Commit: `"Release <plugin-name> v<version>: <summary>"`
   5. Tag: `git tag <plugin-name>/v<version>`
+  6. Push: `git push origin <plugin-name>/v<version>`
 - **No release notes file.** Use git tags and commit messages.
 
 ## Commit Conventions
