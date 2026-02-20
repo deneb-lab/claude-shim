@@ -23,3 +23,48 @@ jobs:
             echo "Checking $f..."
             jq . "$f" > /dev/null
           done
+
+  python-lint:
+    runs-on: claude-shim-runner
+    container:
+      image: registry.phoebe.fi/claude-shim/ci:latest
+      credentials:
+        username: ${{ secrets.REGISTRY_USERNAME }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6
+
+      - name: Ruff check
+        run: uv run --project plugins/claude-code-hooks/hook ruff check
+
+      - name: Ruff format check
+        run: uv run --project plugins/claude-code-hooks/hook ruff format --check
+
+  python-typecheck:
+    runs-on: claude-shim-runner
+    container:
+      image: registry.phoebe.fi/claude-shim/ci:latest
+      credentials:
+        username: ${{ secrets.REGISTRY_USERNAME }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6
+
+      - name: Pyright
+        run: uv run --project plugins/claude-code-hooks/hook pyright
+
+  python-test:
+    runs-on: claude-shim-runner
+    container:
+      image: registry.phoebe.fi/claude-shim/ci:latest
+      credentials:
+        username: ${{ secrets.REGISTRY_USERNAME }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6
+
+      - name: Pytest
+        run: uv run --project plugins/claude-code-hooks/hook pytest -v
