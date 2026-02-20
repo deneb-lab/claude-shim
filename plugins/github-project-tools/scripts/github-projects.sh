@@ -22,6 +22,7 @@
 #   set-date <item-id> <field-id> <date>  Set project date field
 #   get-parent <node-id>                  Get parent issue (id, number, title, state)
 #   count-open-sub-issues <node-id>       Count open sub-issues of a parent
+#   set-parent <child-id> <parent-id>      Set parent issue (add as sub-issue)
 #   table-set-status <parent#> <sub#> <s> Update Action Plan table status column
 
 set -euo pipefail
@@ -299,6 +300,18 @@ cmd_set_date() {
        -f field="$field" -f date="$date"
 }
 
+cmd_set_parent() {
+  [[ -n "${1:-}" ]] || { echo "set-parent: <child-node-id> required" >&2; exit 1; }
+  [[ -n "${2:-}" ]] || { echo "set-parent: <parent-node-id> required" >&2; exit 1; }
+  graphql '
+    mutation($parent: ID!, $child: ID!) {
+      addSubIssue(input: {issueId: $parent, subIssueId: $child}) {
+        subIssue { id }
+      }
+    }' -f parent="$2" -f child="$1" \
+    --jq '.data.addSubIssue.subIssue.id'
+}
+
 # --- Main dispatch ---
 
 # Parse global options (before subcommand)
@@ -328,6 +341,7 @@ case "${1:-}" in
   set-date)             init; shift; cmd_set_date "$@" ;;
   get-parent)           detect_repo; shift; cmd_get_parent "$@" ;;
   count-open-sub-issues) detect_repo; shift; cmd_count_open_sub_issues "$@" ;;
+  set-parent)           detect_repo; shift; cmd_set_parent "$@" ;;
   table-set-status)     init; shift; cmd_table_set_status "$@" ;;
   *)
     echo "Usage: $0 <subcommand> [args...]" >&2
