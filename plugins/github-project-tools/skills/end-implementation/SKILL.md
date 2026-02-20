@@ -16,28 +16,13 @@ When `REPO_OVERRIDE` is set (either from start-implementation handoff or parsed 
 
 ## Phase 0: Preflight
 
-1. Find the bundled script at `~/.claude/plugins/**/github-project-tools/scripts/github-projects.sh`
-2. Run preflight checks:
-   ```bash
-   scripts/github-projects.sh preflight
-   ```
-3. If preflight fails, stop and show the error message to the user. Do not proceed.
+Follow the steps in [prompts/preflight.md](prompts/preflight.md).
 
 ## Phase 1: Setup (conditional)
 
 **If state from `start-implementation` is already in the conversation context** (NODE_ID, ITEM_ID, field IDs, and parent info are known), **skip to Phase 3.**
 
-Otherwise, discover everything from scratch:
-
-1. Get project fields (date field IDs):
-   ```bash
-   scripts/github-projects.sh get-project-fields
-   ```
-   This returns JSON with `start` and `end` field IDs. Save these as `START_FIELD` and `END_FIELD`.
-
-   If this command fails because no project is found, note that **no project is available**. Skip all project operations (get-project-item, set-date, set-status) in later phases. Continue with issue-only operations.
-
-2. The `set-status` subcommand accepts the literal arguments `todo`, `in-progress`, and `done` directly — no manual mapping of project-specific status names is needed.
+Otherwise, follow the steps in [prompts/setup.md](prompts/setup.md).
 
 ## Phase 2: Fetch Issue (conditional)
 
@@ -45,22 +30,11 @@ Otherwise, discover everything from scratch:
 
 Otherwise:
 
-1. Parse the argument. The user provides either:
-   - A plain issue number like `42`
-   - A full GitHub URL like `https://github.com/owner/repo/issues/42`
-
-   Extract the issue number from whichever format is provided.
-
-   **If a full URL was provided**, also extract the `owner/repo` from the URL path. Save this as `REPO_OVERRIDE` (e.g., `elahti/deneb`). When `REPO_OVERRIDE` is set, **prepend `--repo $REPO_OVERRIDE` before the subcommand in every subsequent script invocation**. For example:
-   ```bash
-   scripts/github-projects.sh --repo elahti/deneb issue-view 42 --json id,number,title,body,state
-   ```
-
-   If only a plain issue number was provided, do not use `--repo` — the script will auto-detect the repository from the git remote.
+1. Follow the steps in [prompts/parse-issue-arg.md](prompts/parse-issue-arg.md).
 
 2. Fetch the issue details:
    ```bash
-   scripts/github-projects.sh issue-view <number> --json id,number,title,body,state
+   scripts/github-projects.sh issue-view-full <number>
    ```
    Save the JSON output. Extract the issue `id` as `NODE_ID`.
 
@@ -139,8 +113,4 @@ Otherwise:
 
 ## Important Notes
 
-- **All bash commands** must start with the script being invoked — never wrap in variable assignments like `VAR=$(scripts/...)`. Run the command, then use the output.
-- **JSON processing:** Extract values from command output in-context. Do not use separate `echo | jq` bash commands.
-- **All GitHub operations** go through `scripts/github-projects.sh` — never call `gh` directly.
-- **Date field IDs** are looked up at runtime via `get-project-fields` — they may change if the project is recreated.
-- **Project is optional.** If no project is detected in Phase 1, skip all project operations (get-project-item, set-date, set-status) but still perform issue operations (close, parent check, parent close).
+Follow the conventions in [prompts/conventions.md](prompts/conventions.md).

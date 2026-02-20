@@ -7,6 +7,10 @@ description: Create a GitHub issue from conversation context and add it to the p
 
 Create a new GitHub issue from conversation context and add it to the Deneb project board.
 
+## Phase 0: Preflight
+
+Follow the steps in [prompts/preflight.md](prompts/preflight.md).
+
 ## Phase 1: Gather Context
 
 Read the conversation context and any arguments provided. You need:
@@ -78,6 +82,4 @@ If a parent was linked in Phase 2.5, also report: "Linked as sub-issue of #N (ti
 
 ## Important Notes
 
-- **All bash commands** must start with the script being invoked — never wrap in variable assignments like `VAR=$(scripts/...)`. Run the command, then use the output.
-- **JSON processing:** Extract values from command output in-context. Do not use separate `echo | jq` bash commands.
-- **All GitHub operations** go through `scripts/github-projects.sh` — never call `gh` directly.
+Follow the conventions in [prompts/conventions.md](prompts/conventions.md).
