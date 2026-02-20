@@ -1,0 +1,75 @@
+import subprocess
+from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+from claude_code_hooks.runner import run_commands
+
+
+class TestRunCommands:
+    def test_all_commands_succeed(self, tmp_path: Path) -> None:
+        test_file = tmp_path / "test.ts"
+        test_file.write_text("content")
+
+        with patch("claude_code_hooks.runner.subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+            result = run_commands(["cmd1", "cmd2"], str(test_file), cwd=str(tmp_path))
+
+        assert result.success
+        assert mock_run.call_count == 2
+
+    def test_first_command_fails_stops_execution(self, tmp_path: Path) -> None:
+        test_file = tmp_path / "test.ts"
+        test_file.write_text("content")
+
+        with patch("claude_code_hooks.runner.subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(
+                returncode=1, stdout="lint output", stderr="error detail"
+            )
+            result = run_commands(
+                ["failing-cmd", "never-runs"], str(test_file), cwd=str(tmp_path)
+            )
+
+        assert not result.success
+        assert "failing-cmd" in result.error_message
+        assert mock_run.call_count == 1
+
+    def test_file_path_appended_as_last_arg(self, tmp_path: Path) -> None:
+        test_file = tmp_path / "test.ts"
+        test_file.write_text("content")
+
+        with patch("claude_code_hooks.runner.subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+            run_commands(["npx prettier --write"], str(test_file), cwd=str(tmp_path))
+
+        call_args = mock_run.call_args
+        assert str(test_file) in call_args[0][0]
+
+    def test_empty_commands_returns_success(self, tmp_path: Path) -> None:
+        result = run_commands([], str(tmp_path / "test.ts"), cwd=str(tmp_path))
+        assert result.success
+
+    def test_command_output_included_in_error(self, tmp_path: Path) -> None:
+        test_file = tmp_path / "test.ts"
+        test_file.write_text("content")
+
+        with patch("claude_code_hooks.runner.subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(
+                returncode=1,
+                stdout="line 5: unexpected token",
+                stderr="",
+            )
+            result = run_commands(["eslint"], str(test_file), cwd=str(tmp_path))
+
+        assert not result.success
+        assert "unexpected token" in result.error_message
+
+    def test_command_timeout(self, tmp_path: Path) -> None:
+        test_file = tmp_path / "test.ts"
+        test_file.write_text("content")
+
+        with patch("claude_code_hooks.runner.subprocess.run") as mock_run:
+            mock_run.side_effect = subprocess.TimeoutExpired(cmd="slow-cmd", timeout=30)
+            result = run_commands(["slow-cmd"], str(test_file), cwd=str(tmp_path))
+
+        assert not result.success
+        assert "timed out" in result.error_message.lower()
