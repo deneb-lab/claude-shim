@@ -72,7 +72,13 @@ Before making any changes, note the current status of the issue (and parent if a
    scripts/github-projects.sh issue-assign <number>
    ```
 
-2. **If a project is available:**
+2. **If a parent issue exists** (detected in Phase 2, step 4), assign yourself to the parent issue:
+   ```bash
+   scripts/github-projects.sh issue-assign <PARENT_NUMBER>
+   ```
+   This is idempotent — no error if already assigned.
+
+3. **If a project is available:**
 
    a. Check if the issue is already on the project board:
       ```bash
@@ -95,7 +101,7 @@ Before making any changes, note the current status of the issue (and parent if a
       scripts/github-projects.sh set-status "$ITEM_ID" in-progress
       ```
 
-3. **If a parent issue exists AND a project is available:**
+4. **If a parent issue exists AND a project is available:**
 
    a. Get the parent's start date:
       ```bash
@@ -114,14 +120,14 @@ Before making any changes, note the current status of the issue (and parent if a
         scripts/github-projects.sh set-status "$PARENT_ITEM" in-progress
         ```
 
-4. Ask the user: "Create a draft PR linked to this issue?"
+5. Ask the user: "Create a draft PR linked to this issue?"
    - If yes:
      ```bash
      scripts/github-projects.sh pr-create-draft <number>
      ```
    - If no, skip this step.
 
-5. **Ask the user** how they want to set up their workspace. Suggest a branch name based on the issue: `feat/<issue-number>-<slug>` where the slug is the issue title lowercased, spaces replaced by hyphens, special characters removed.
+6. **Ask the user** how they want to set up their workspace. Suggest a branch name based on the issue: `feat/<issue-number>-<slug>` where the slug is the issue title lowercased, spaces replaced by hyphens, special characters removed.
 
    Offer three options:
 
