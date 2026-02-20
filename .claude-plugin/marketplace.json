@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "Claude Code plugins for project management, security auditing, and automation",
-    "version": "0.7.0"
+    "version": "0.8.0"
   },
   "plugins": [
     {
       "name": "github-project-tools",
       "source": "./plugins/github-project-tools",
       "description": "GitHub issue creation and implementation with project board lifecycle management",
-      "version": "0.7.0",
+      "version": "0.8.0",
       "strict": true
     },
     {
