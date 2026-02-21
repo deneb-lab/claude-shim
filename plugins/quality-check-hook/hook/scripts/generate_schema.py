@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from claude_code_hooks.config import ClaudeShimConfig
+from quality_check_hook.config import ClaudeShimConfig
 
 SCHEMA_PATH = Path(__file__).resolve().parent.parent.parent / "claude-shim.schema.json"
 
@@ -18,7 +18,7 @@ def main() -> None:
 
     schema["$schema"] = "https://json-schema.org/draft/2020-12/schema"
     schema["$id"] = (
-        "https://raw.githubusercontent.com/elahti/claude-shim/main/plugins/claude-code-hooks/claude-shim.schema.json"
+        "https://raw.githubusercontent.com/elahti/claude-shim/main/plugins/quality-check-hook/claude-shim.schema.json"
     )
 
     # Add top-level properties description

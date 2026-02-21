@@ -84,7 +84,7 @@ class TestClaudeShimConfig:
 
     def test_schema_key_ignored(self, tmp_path: Path) -> None:
         config_data = {
-            "$schema": "https://raw.githubusercontent.com/elahti/claude-shim/main/plugins/claude-code-hooks/claude-shim.schema.json",
+            "$schema": "https://raw.githubusercontent.com/elahti/claude-shim/main/plugins/quality-check-hook/claude-shim.schema.json",
             "quality-checks": {
                 "include": [{"pattern": "**/*.py", "commands": ["ruff check"]}]
             },

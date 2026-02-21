@@ -1,9 +1,9 @@
 ---
-name: setup
+name: setup-quality-check-hook
 description: Set up or modify .claude-shim.json quality checks for the current repository
 ---
 
-# Claude Code Hooks — Setup
+# Quality Check Hook — Setup
 
 Configure quality checks that run automatically when Claude edits files in this repository.
 
@@ -17,7 +17,7 @@ which uv
 
 If `uv` is not found, stop and tell the user:
 
-> The claude-code-hooks plugin requires uv to run. Install it with:
+> The quality-check-hook plugin requires uv to run. Install it with:
 > `curl -LsSf https://astral.sh/uv/install.sh | sh`
 > See https://docs.astral.sh/uv/getting-started/installation/ for other methods.
 
@@ -81,7 +81,7 @@ Write the final `.claude-shim.json` to the repository root with this structure:
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/elahti/claude-shim/main/plugins/claude-code-hooks/claude-shim.schema.json",
+  "$schema": "https://raw.githubusercontent.com/elahti/claude-shim/main/plugins/quality-check-hook/claude-shim.schema.json",
   "quality-checks": {
     "include": [
       ...
@@ -95,6 +95,6 @@ Write the final `.claude-shim.json` to the repository root with this structure:
 
 After writing, tell the user:
 
-> `.claude-shim.json` has been created. The claude-code-hooks plugin will now automatically run these quality checks whenever Claude edits matching files.
+> `.claude-shim.json` has been created. The quality-check-hook plugin will now automatically run these quality checks whenever Claude edits matching files.
 >
 > You can re-run this skill anytime to modify the configuration.

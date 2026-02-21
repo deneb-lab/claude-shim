@@ -36,10 +36,10 @@ jobs:
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6
 
       - name: Ruff check
-        run: uv run --project plugins/claude-code-hooks/hook ruff check
+        run: uv run --project plugins/quality-check-hook/hook ruff check
 
       - name: Ruff format check
-        run: uv run --project plugins/claude-code-hooks/hook ruff format --check
+        run: uv run --project plugins/quality-check-hook/hook ruff format --check
 
   python-typecheck:
     runs-on: claude-shim-runner
@@ -53,7 +53,7 @@ jobs:
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6
 
       - name: Pyright
-        run: uv run --project plugins/claude-code-hooks/hook pyright
+        run: uv run --project plugins/quality-check-hook/hook pyright
 
   python-test:
     runs-on: claude-shim-runner
@@ -67,4 +67,4 @@ jobs:
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6
 
       - name: Pytest
-        run: uv run --project plugins/claude-code-hooks/hook pytest -v
+        run: uv run --project plugins/quality-check-hook/hook pytest -v
