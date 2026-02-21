@@ -1,5 +1,5 @@
-from claude_code_hooks.config import QualityCheckEntry, QualityChecks
-from claude_code_hooks.matcher import collect_commands
+from quality_check_hook.config import QualityCheckEntry, QualityChecks
+from quality_check_hook.matcher import collect_commands
 
 
 class TestCollectCommands:

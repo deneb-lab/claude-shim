@@ -2,7 +2,7 @@ import subprocess
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from claude_code_hooks.runner import run_commands
+from quality_check_hook.runner import run_commands
 
 
 class TestRunCommands:
@@ -10,7 +10,7 @@ class TestRunCommands:
         test_file = tmp_path / "test.ts"
         test_file.write_text("content")
 
-        with patch("claude_code_hooks.runner.subprocess.run") as mock_run:
+        with patch("quality_check_hook.runner.subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
             result = run_commands(["cmd1", "cmd2"], str(test_file), cwd=str(tmp_path))
 
@@ -21,7 +21,7 @@ class TestRunCommands:
         test_file = tmp_path / "test.ts"
         test_file.write_text("content")
 
-        with patch("claude_code_hooks.runner.subprocess.run") as mock_run:
+        with patch("quality_check_hook.runner.subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(
                 returncode=1, stdout="lint output", stderr="error detail"
             )
@@ -37,7 +37,7 @@ class TestRunCommands:
         test_file = tmp_path / "test.ts"
         test_file.write_text("content")
 
-        with patch("claude_code_hooks.runner.subprocess.run") as mock_run:
+        with patch("quality_check_hook.runner.subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
             run_commands(["npx prettier --write"], str(test_file), cwd=str(tmp_path))
 
@@ -52,7 +52,7 @@ class TestRunCommands:
         test_file = tmp_path / "test.ts"
         test_file.write_text("content")
 
-        with patch("claude_code_hooks.runner.subprocess.run") as mock_run:
+        with patch("quality_check_hook.runner.subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(
                 returncode=1,
                 stdout="line 5: unexpected token",
@@ -67,7 +67,7 @@ class TestRunCommands:
         test_file = tmp_path / "test.ts"
         test_file.write_text("content")
 
-        with patch("claude_code_hooks.runner.subprocess.run") as mock_run:
+        with patch("quality_check_hook.runner.subprocess.run") as mock_run:
             mock_run.side_effect = subprocess.TimeoutExpired(cmd="slow-cmd", timeout=30)
             result = run_commands(["slow-cmd"], str(test_file), cwd=str(tmp_path))
 

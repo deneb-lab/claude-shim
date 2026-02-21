@@ -4,9 +4,9 @@ import json
 import sys
 from pathlib import Path
 
-from claude_code_hooks.config import load_config
-from claude_code_hooks.matcher import collect_commands
-from claude_code_hooks.runner import run_commands
+from quality_check_hook.config import load_config
+from quality_check_hook.matcher import collect_commands
+from quality_check_hook.runner import run_commands
 
 
 def _extract_file_path(tool_input: dict[str, object]) -> str | None:

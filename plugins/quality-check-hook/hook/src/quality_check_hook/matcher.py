@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from wcmatch import glob as wcglob
 
-from claude_code_hooks.config import QualityChecks
+from quality_check_hook.config import QualityChecks
 
 GLOB_FLAGS = wcglob.GLOBSTAR | wcglob.BRACE | wcglob.DOTGLOB
 

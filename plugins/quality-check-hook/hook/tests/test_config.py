@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from claude_code_hooks.config import load_config
+from quality_check_hook.config import load_config
 
 
 class TestClaudeShimConfig:

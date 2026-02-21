@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from claude_code_hooks.main import handle_hook
+from quality_check_hook.main import handle_hook
 
 
 class TestHandleHook:
@@ -49,7 +49,7 @@ class TestHandleHook:
         test_file.write_text("content")
         payload = self._make_payload(str(test_file), str(tmp_path))
 
-        with patch("claude_code_hooks.runner.subprocess.run") as mock_run:
+        with patch("quality_check_hook.runner.subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
             exit_code, _stdout, _stderr = handle_hook(json.dumps(payload))
 
@@ -66,7 +66,7 @@ class TestHandleHook:
         test_file.write_text("content")
         payload = self._make_payload(str(test_file), str(tmp_path))
 
-        with patch("claude_code_hooks.runner.subprocess.run") as mock_run:
+        with patch("quality_check_hook.runner.subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(
                 returncode=1, stdout="error found", stderr=""
             )
@@ -106,7 +106,7 @@ class TestHandleHook:
             "cwd": str(tmp_path),
         }
 
-        with patch("claude_code_hooks.runner.subprocess.run") as mock_run:
+        with patch("quality_check_hook.runner.subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
             exit_code, _stdout, _stderr = handle_hook(json.dumps(payload))
 
