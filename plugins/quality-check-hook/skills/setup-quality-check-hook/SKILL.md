@@ -36,13 +36,9 @@ Understanding the execution model is essential for writing correct commands.
 
 ## Prerequisites
 
-Check that `uv` is available:
+Run `scripts/setup-quality-check-hook.sh check-uv` to verify that `uv` is installed.
 
-```bash
-which uv
-```
-
-If `uv` is not found, stop and tell the user:
+If the command fails, stop and tell the user:
 
 > The quality-check-hook plugin requires uv to run. Install it with:
 > `curl -LsSf https://astral.sh/uv/install.sh | sh`
