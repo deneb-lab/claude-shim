@@ -20,13 +20,13 @@ Follow the steps in [prompts/preflight.md](prompts/preflight.md).
 
 ## Phase 1: Setup (conditional)
 
-**If state from `start-implementation` is already in the conversation context** (NODE_ID, ITEM_ID, field IDs, and parent info are known), **skip to Phase 3.**
+**If state from `start-implementation` is already in the conversation context** (NODE_ID, ITEM_ID, field IDs, and parent info are known), **skip to Phase 2.5.**
 
 Otherwise, follow the steps in [prompts/setup.md](prompts/setup.md).
 
 ## Phase 2: Fetch Issue (conditional)
 
-**If state from `start-implementation` is already in the conversation context**, **skip to Phase 3.**
+**If state from `start-implementation` is already in the conversation context**, **skip to Phase 2.5.**
 
 Otherwise:
 
@@ -55,6 +55,30 @@ Otherwise:
    - `PARENT_NUMBER` from `.number`
    - `PARENT_TITLE` from `.title`
 
+## Phase 2.5: Generate Implementation Summary
+
+This phase adds a closing comment summarizing what was implemented. The summary provides context for future Claude sessions reviewing this issue.
+
+**This phase only runs when there is implementation context in the conversation** (i.e., handoff from `start-implementation` where actual implementation work was done in this session). If this skill was invoked standalone with no prior implementation context, **skip this phase entirely** — close the issue without a comment.
+
+1. Review the conversation context: what was discussed, built, changed, and committed during this session.
+
+2. Generate a concise summary in this format:
+
+   ```markdown
+   ## Implementation Summary
+
+   - <what was done, 3-7 bullets>
+   ```
+
+   Each bullet should describe a concrete change (e.g., "Added `--comment` flag to `issue-close` subcommand in `github-projects.sh`"). Focus on what changed, not why.
+
+3. Present the summary to the user: "Here's the implementation summary that will be posted as a closing comment:" followed by the formatted summary.
+
+4. Ask the user to approve: **"Post this summary as a closing comment?"**
+   - **If yes:** Save the summary text as `SUMMARY` for use in Phase 3.
+   - **If no / skip:** Set `SUMMARY` to empty. The issue will be closed without a comment.
+
 ## Phase 3: Set End State
 
 1. **If a project is available:**
@@ -69,7 +93,11 @@ Otherwise:
       scripts/github-projects.sh set-status "$ITEM_ID" done
       ```
 
-2. Close the issue:
+2. Close the issue. If `SUMMARY` is non-empty (from Phase 2.5), include it as a closing comment:
+   ```bash
+   scripts/github-projects.sh issue-close <number> --comment "$SUMMARY"
+   ```
+   If `SUMMARY` is empty, close without a comment:
    ```bash
    scripts/github-projects.sh issue-close <number>
    ```
