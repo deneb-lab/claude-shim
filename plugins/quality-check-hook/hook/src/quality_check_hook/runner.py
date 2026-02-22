@@ -34,6 +34,8 @@ def run_commands(commands: list[str], file_path: str, *, cwd: str) -> CommandRes
             )
 
         if result.returncode != 0:
+            if command.startswith("ansible-lint --fix"):
+                continue
             output = (result.stdout + result.stderr).strip()
             return CommandResult(
                 success=False,

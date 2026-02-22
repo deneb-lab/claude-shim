@@ -73,3 +73,22 @@ class TestRunCommands:
 
         assert not result.success
         assert "timed out" in result.error_message.lower()
+
+    def test_ansible_lint_fix_nonzero_continues_execution(self, tmp_path: Path) -> None:
+        """ansible-lint --fix may exit non-zero after successful fixes; runner should continue."""
+        test_file = tmp_path / "main.yml"
+        test_file.write_text("content")
+
+        with patch("quality_check_hook.runner.subprocess.run") as mock_run:
+            mock_run.side_effect = [
+                MagicMock(returncode=1, stdout="Modified 1 file.\n", stderr=""),
+                MagicMock(returncode=0, stdout="", stderr=""),
+            ]
+            result = run_commands(
+                ["ansible-lint --fix", "ansible-lint"],
+                str(test_file),
+                cwd=str(tmp_path),
+            )
+
+        assert result.success
+        assert mock_run.call_count == 2
