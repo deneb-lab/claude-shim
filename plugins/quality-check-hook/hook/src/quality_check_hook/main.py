@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 from quality_check_hook.config import load_config
+from quality_check_hook.gitignore import is_gitignored
 from quality_check_hook.matcher import collect_commands
 from quality_check_hook.runner import run_commands
 
@@ -38,6 +39,9 @@ def handle_hook(raw_input: str) -> tuple[int, str, str]:
     try:
         relative_path = str(Path(file_path).relative_to(cwd_path))
     except ValueError:
+        return 0, "{}", ""
+
+    if is_gitignored(file_path, cwd=cwd):
         return 0, "{}", ""
 
     commands = collect_commands(relative_path, config.quality_checks)

@@ -113,6 +113,52 @@ class TestHandleHook:
         assert exit_code == 0
         assert mock_run.call_count == 1
 
+    def test_gitignored_file_skipped(self, tmp_path: Path) -> None:
+        """Gitignored files should be skipped even if they match a pattern."""
+        config = {
+            "quality-checks": {
+                "include": [{"pattern": "**/*.ts", "commands": ["eslint"]}]
+            }
+        }
+        (tmp_path / ".claude-shim.json").write_text(json.dumps(config))
+        test_file = tmp_path / "generated" / "types.ts"
+        test_file.parent.mkdir(parents=True)
+        test_file.write_text("content")
+        payload = self._make_payload(str(test_file), str(tmp_path))
+
+        with (
+            patch("quality_check_hook.main.is_gitignored", return_value=True),
+            patch("quality_check_hook.runner.subprocess.run") as mock_run,
+        ):
+            exit_code, _stdout, stderr = handle_hook(json.dumps(payload))
+
+        assert exit_code == 0
+        assert stderr == ""
+        assert mock_run.call_count == 0
+
+    def test_non_gitignored_file_checked(self, tmp_path: Path) -> None:
+        """Non-gitignored files should proceed through normal quality checks."""
+        config = {
+            "quality-checks": {
+                "include": [{"pattern": "**/*.ts", "commands": ["eslint"]}]
+            }
+        }
+        (tmp_path / ".claude-shim.json").write_text(json.dumps(config))
+        test_file = tmp_path / "src" / "app.ts"
+        test_file.parent.mkdir(parents=True)
+        test_file.write_text("content")
+        payload = self._make_payload(str(test_file), str(tmp_path))
+
+        with (
+            patch("quality_check_hook.main.is_gitignored", return_value=False),
+            patch("quality_check_hook.runner.subprocess.run") as mock_run,
+        ):
+            mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+            exit_code, _stdout, _stderr = handle_hook(json.dumps(payload))
+
+        assert exit_code == 0
+        assert mock_run.call_count == 1
+
     def test_missing_file_path_returns_success(self, tmp_path: Path) -> None:
         payload: dict[str, object] = {
             "session_id": "test",
