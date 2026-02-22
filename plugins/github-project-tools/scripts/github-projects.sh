@@ -12,7 +12,7 @@
 #   issue-view-full <number>              View issue (JSON: id,number,title,body,state)
 #   issue-create --title T --body B       Create issue (optional --label)
 #   issue-edit <number> --body B          Update issue body
-#   issue-close <number>                  Close issue as completed
+#   issue-close <number> [--comment C]    Close issue as completed (optional comment)
 #   issue-assign <number>                 Assign issue to current user
 #   get-project-item <node-id>            Get project item ID for an issue
 #   get-project-fields                    Get date field IDs
@@ -167,7 +167,17 @@ cmd_issue_edit() {
 }
 
 cmd_issue_close() {
-  gh issue close "$1" --repo "$REPO" --reason completed
+  local number="$1"; shift
+  local comment=""
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --comment) comment="$2"; shift 2 ;;
+      *) echo "issue-close: unknown arg: $1" >&2; exit 1 ;;
+    esac
+  done
+  local -a cmd=(gh issue close "$number" --repo "$REPO" --reason completed)
+  [[ -n "$comment" ]] && cmd+=(--comment "$comment")
+  "${cmd[@]}"
 }
 
 cmd_issue_assign() {
