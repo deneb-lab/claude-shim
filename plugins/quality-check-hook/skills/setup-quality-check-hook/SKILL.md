@@ -98,11 +98,9 @@ Build the exclude list using these candidates based on detected tooling:
 **Python candidates:** `.venv`, `__pycache__`, `.mypy_cache`, `.ruff_cache`, `.pytest_cache`
 **General candidates:** `coverage`, `.cache`
 
-**For each candidate:**
-1. Does this directory actually exist in the repo? → If no, skip it
-2. Is it gitignored? (Check with `git check-ignore -q {dir}`) → If yes, skip it — the hook already skips gitignored files at runtime
+Run `scripts/setup-quality-check-hook.sh build-excludes <candidates...>` where `<candidates...>` is the space-separated list of directories from above. The script outputs one directory per line — only directories that actually exist in the repo AND are not gitignored.
 
-Only include candidates that **exist AND are NOT gitignored**.
+Use the script output as the exclude list.
 
 Tell the user: "Files matched by .gitignore are automatically skipped by the hook, so they don't need to be in the exclude list. The excludes below are only for non-gitignored directories you still want to skip."
 
