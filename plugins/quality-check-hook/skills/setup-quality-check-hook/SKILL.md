@@ -58,17 +58,9 @@ Look for `.claude-shim.json` in the repository root.
 
 ## Step 2: Detect Package Runner
 
-Before detecting tooling, determine the JavaScript/TypeScript package runner from lockfiles:
+Run `scripts/setup-quality-check-hook.sh detect-runner` to determine the JavaScript/TypeScript package runner. The script checks lockfiles in the repository root and outputs the runner name (`bunx`, `pnpx`, or `npx`).
 
-| Lockfile | Runner |
-|---|---|
-| `bun.lockb` or `bun.lock` | `bunx` |
-| `pnpm-lock.yaml` | `pnpx` |
-| `yarn.lock` | `npx` |
-| `package-lock.json` | `npx` |
-| None of the above | `npx` |
-
-Use the detected runner (referred to as `{runner}` below) in all JS/TS commands. Present it to the user for confirmation: "Detected `bun.lockb` — using `bunx` as the package runner. Change?"
+Use the detected runner (referred to as `{runner}` below) in all JS/TS commands. Present it to the user for confirmation: "Detected `{runner}` as the package runner. Change?"
 
 ## Step 3: Detect Project Tooling
 
