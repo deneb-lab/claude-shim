@@ -7,6 +7,7 @@ Claude Code plugin marketplace monorepo. Plugins are self-contained directories 
 - `.claude-plugin/marketplace.json` — Plugin catalog (lists all plugins with versions)
 - `plugins/<name>/.claude-plugin/plugin.json` — Plugin metadata
 - `plugins/<name>/skills/<skill-name>/SKILL.md` — Skill definitions
+- `plugins/<name>/skills/<skill-name>/prompts/` — Prompt files referenced by the skill
 - `plugins/<name>/scripts/` — Shell scripts bundled with the plugin
 
 ## Adding a New Plugin
@@ -31,7 +32,9 @@ Claude Code plugin marketplace monorepo. Plugins are self-contained directories 
 - **Frontmatter:** Every SKILL.md starts with YAML frontmatter: `name` and `description`
 - **Naming:** Bare action name in frontmatter and directory (e.g., `add-issue`, `report`). Cross-references use fully-qualified `plugin-name:skill-name` form (e.g., `github-project-tools:add-issue`).
 - **Paths:** Reference scripts as `scripts/<name>.sh` (plugin-relative)
-- **Prompts:** Sub-agent prompts go in `prompts/` subdirectory next to SKILL.md
+- **Prompts:** Prompt files go in `prompts/` subdirectory **inside each skill directory** (next to SKILL.md), never at the plugin root. Claude Code resolves relative paths from the skill directory, not the plugin root.
+- **Shared prompts:** When multiple skills in a plugin use the same prompt file, each skill gets its own copy. When editing a shared prompt, **update every copy across all skills that use it.** Use `git diff` to verify all copies stay identical. Shared prompt groups:
+  - `github-project-tools`: `preflight.md` and `conventions.md` are shared by all 3 skills; `setup.md` and `parse-issue-arg.md` are shared by `start-implementation` and `end-implementation`
 
 ## Script Conventions
 

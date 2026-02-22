@@ -1,0 +1,5 @@
+- **All bash commands** must start with the script being invoked — never wrap in variable assignments like `VAR=$(scripts/...)`. Run the command, then use the output.
+- **JSON processing:** Extract values from command output in-context. Do not use separate `echo | jq` bash commands.
+- **All GitHub operations** go through `scripts/github-projects.sh` — never call `gh` directly.
+- **Date field IDs** are looked up at runtime via `get-project-fields` — they may change if the project is recreated.
+- **Project is optional.** If no project is detected during setup, skip all project operations (get-project-item, add-to-project, set-date, set-status) but still perform issue operations (assign, view, close, parent check).
