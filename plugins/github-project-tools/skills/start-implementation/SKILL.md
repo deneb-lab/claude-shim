@@ -1,7 +1,7 @@
 ---
 name: start-implementation
 description: Start implementing a GitHub issue - assigns, sets dates/status, and presents issue context
-allowed-tools: Bash(github-projects.sh:*), Bash(find:*), Bash(date:*), Bash(git:*), Bash(basename:*)
+allowed-tools: Bash(github-projects.sh:*), Bash(find:*), Bash(git:*), Bash(basename:*)
 ---
 
 # GitHub Projects — Start Implementation
@@ -67,7 +67,7 @@ Before making any changes, note the current status of the issue (and parent if a
 
    b. Set the start date to today:
       ```bash
-      scripts/github-projects.sh set-date "$ITEM_ID" "$START_FIELD" "$(date +%Y-%m-%d)"
+      scripts/github-projects.sh set-date "$ITEM_ID" "$START_FIELD"
       ```
 
    c. Set status to in-progress:
@@ -88,7 +88,7 @@ Before making any changes, note the current status of the issue (and parent if a
       - **Only proceed if the user confirms.**
       - If confirmed:
         ```bash
-        scripts/github-projects.sh set-date "$PARENT_ITEM" "$START_FIELD" "$(date +%Y-%m-%d)"
+        scripts/github-projects.sh set-date "$PARENT_ITEM" "$START_FIELD"
         ```
         ```bash
         scripts/github-projects.sh set-status "$PARENT_ITEM" in-progress
