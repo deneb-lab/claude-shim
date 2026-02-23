@@ -5,21 +5,21 @@
   },
   "metadata": {
     "description": "Claude Code plugins for project management, security auditing, and automation",
-    "version": "0.16.0"
+    "version": "0.16.1"
   },
   "plugins": [
     {
       "name": "github-project-tools",
       "source": "./plugins/github-project-tools",
       "description": "GitHub issue creation and implementation with project board lifecycle management",
-      "version": "0.10.0",
+      "version": "0.10.1",
       "strict": true
     },
     {
       "name": "trivy-audit",
       "source": "./plugins/trivy-audit",
       "description": "Trivy security audit coordinator — CVE analysis, version staleness, config audits with agent team",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "strict": true
     },
     {
