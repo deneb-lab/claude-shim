@@ -13,7 +13,7 @@
 #   get-start-date <node-id>              Get project item ID + start date
 #   add-to-project <node-id>              Add issue to project, returns item ID
 #   set-status <item-id> <status>         Set project status (todo|in-progress|done)
-#   set-date <item-id> <field-id> <date>  Set project date field
+#   set-date <item-id> <field-id>         Set project date field (always today)
 #   get-parent <node-id>                  Get parent issue (id, number, title, state)
 #   count-open-sub-issues <node-id>       Count open sub-issues of a parent
 #   table-set-status <parent#> <sub#> <s> Update Action Plan table status column
@@ -237,7 +237,9 @@ cmd_set_status() {
 }
 
 cmd_set_date() {
-  local item="$1" field="$2" date="$3"
+  local item="$1" field="$2"
+  local date
+  date=$(date +%Y-%m-%d)
   graphql '
     mutation($project: ID!, $item: ID!, $field: ID!, $date: Date!) {
       updateProjectV2ItemFieldValue(input: {
