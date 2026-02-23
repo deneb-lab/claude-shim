@@ -1,4 +1,5 @@
 - **All bash commands** must start with the script being invoked — never wrap in variable assignments like `VAR=$(scripts/...)`. Run the command, then use the output.
+- **No command substitution** in bash commands — never use `$(...)`. If logic is needed, add it to the wrapper script. Use `--body-file` for multi-line content (write to a temp file with the Write tool first).
 - **JSON processing:** Extract values from command output in-context. Do not use separate `echo | jq` bash commands.
 - **All GitHub operations** go through `scripts/github-projects.sh` — never call `gh` directly.
 - **Date field IDs** are looked up at runtime via `get-project-fields` — they may change if the project is recreated.
