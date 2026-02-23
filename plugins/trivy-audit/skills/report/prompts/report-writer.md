@@ -231,7 +231,7 @@ scripts/trivy-audit-gh.sh get-sub-issues "$PARENT_ID"
 
 ## Important Notes
 
-- **All bash commands** must start with the script or command being invoked — never wrap in variable assignments like `VAR=$(scripts/...)`. Run the command, then use the output in subsequent commands.
+- **Script invocation:** The resolved script path MUST be the literal first token of every bash command — e.g. `scripts/github-projects.sh issue-assign 14`. NEVER split the path into a variable like `SCRIPTS=... && $SCRIPTS/github-projects.sh ...`. Claude Code matches permissions by the first token; variable-wrapped paths produce a different fingerprint every time, forcing repeated approval prompts.
 - **No command substitution** in bash commands — never use `$(...)`. Use `--body-file` for multi-line bodies (write to a named temp file in `/tmp/` with the Write tool first).
 - **JSON processing:** Extract values from command output in-context. Do not use separate `echo | jq` bash commands.
 - **Generic GitHub operations** (issue-create, issue-view, issue-edit, add-to-project, set-status) go through `scripts/github-projects.sh`. **Trivy-specific operations** (list-open-parents, link-sub-issue, get-sub-issues) go through `scripts/trivy-audit-gh.sh`. Never call `gh` directly.
