@@ -10,8 +10,8 @@
 #   preflight                             Verify gh CLI, auth, and scopes
 #   issue-view <number> [gh-flags...]     View issue (passthrough to gh issue view)
 #   issue-view-full <number>              View issue (JSON: id,number,title,body,state)
-#   issue-create --title T --body B       Create issue (optional --label)
-#   issue-edit <number> --body B          Update issue body
+#   issue-create --title T --body B       Create issue (optional --label, --body-file)
+#   issue-edit <number> --body B          Update issue body (or --body-file)
 #   issue-close <number> [--comment C]    Close issue as completed (optional comment)
 #   issue-assign <number>                 Assign issue to current user
 #   get-project-item <node-id>            Get project item ID for an issue
@@ -142,6 +142,7 @@ cmd_issue_create() {
     case "$1" in
       --title) title="$2"; shift 2 ;;
       --body) body="$2"; shift 2 ;;
+      --body-file) body=$(cat "$2"); shift 2 ;;
       --label) label="$2"; shift 2 ;;
       *) echo "issue-create: unknown arg: $1" >&2; exit 1 ;;
     esac
@@ -159,6 +160,7 @@ cmd_issue_edit() {
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --body) body="$2"; shift 2 ;;
+      --body-file) body=$(cat "$2"); shift 2 ;;
       *) echo "issue-edit: unknown arg: $1" >&2; exit 1 ;;
     esac
   done
