@@ -53,13 +53,16 @@ Claude Code plugin marketplace monorepo. Plugins are self-contained directories 
 
 - **Per-plugin semver:** Each plugin has its own version in `plugin.json`
 - **marketplace.json** mirrors each plugin's version and has its own `metadata.version`
-- **Bump process:**
-  1. Update `version` in `plugins/<name>/.claude-plugin/plugin.json`
-  2. Update the matching `version` in `.claude-plugin/marketplace.json` plugins array
-  3. Bump `metadata.version` in marketplace.json if the catalog changed
-  4. Commit: `"Release <plugin-name> v<version>: <summary>"`
-  5. Tag: `git tag <plugin-name>/v<version>`
-  6. Push: `git push origin <plugin-name>/v<version>`
+- **Version sync rule:** When bumping a plugin version, ALWAYS update BOTH files together:
+  1. `plugins/<name>/.claude-plugin/plugin.json`
+  2. The matching entry in `.claude-plugin/marketplace.json`
+  These must never diverge. The `/plugin` view reads from marketplace.json.
+- **Release process** (when cutting a release):
+  1. Bump versions in both files (see rule above)
+  2. Bump `metadata.version` in marketplace.json if the catalog changed
+  3. Commit: `"Release <plugin-name> v<version>: <summary>"`
+  4. Tag: `git tag <plugin-name>/v<version>`
+  5. Push: `git push origin <plugin-name>/v<version>`
 - **No release notes file.** Use git tags and commit messages.
 
 ## Commit Conventions
