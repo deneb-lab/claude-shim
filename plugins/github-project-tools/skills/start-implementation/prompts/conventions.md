@@ -1,4 +1,4 @@
-- **All bash commands** must start with the script being invoked — never wrap in variable assignments like `VAR=$(scripts/...)`. Run the command, then use the output.
+- **Script invocation:** The resolved script path MUST be the literal first token of every bash command — e.g. `scripts/github-projects.sh issue-assign 14`. NEVER split the path into a variable like `SCRIPTS=... && $SCRIPTS/github-projects.sh ...`. Claude Code matches permissions by the first token; variable-wrapped paths produce a different fingerprint every time, forcing repeated approval prompts.
 - **No command substitution** in bash commands — never use `$(...)`. If logic is needed, add it to the wrapper script. Use `--body-file` for multi-line content (write to a temp file with the Write tool first).
 - **JSON processing:** Extract values from command output in-context. Do not use separate `echo | jq` bash commands.
 - **All GitHub operations** go through `scripts/github-projects.sh` — never call `gh` directly.
