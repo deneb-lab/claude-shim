@@ -93,10 +93,12 @@ This phase adds a closing comment summarizing what was implemented. The summary 
       scripts/github-projects.sh set-status "$ITEM_ID" done
       ```
 
-2. Close the issue. If `SUMMARY` is non-empty (from Phase 2.5), include it as a closing comment:
-   ```bash
-   scripts/github-projects.sh issue-close <number> --comment "$SUMMARY"
-   ```
+2. Close the issue. If `SUMMARY` is non-empty (from Phase 2.5), write it to a temp file and include it as a closing comment:
+   - Write the summary to `/tmp/issue-close-comment.md` using the Write tool
+   - Then close:
+     ```bash
+     scripts/github-projects.sh issue-close <number> --comment-file /tmp/issue-close-comment.md
+     ```
    If `SUMMARY` is empty, close without a comment:
    ```bash
    scripts/github-projects.sh issue-close <number>
