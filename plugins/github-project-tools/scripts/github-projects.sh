@@ -12,7 +12,7 @@
 #   issue-view-full <number>              View issue (JSON: id,number,title,body,state)
 #   issue-create --title T --body B       Create issue (optional --label, --body-file)
 #   issue-edit <number> --body B          Update issue body (or --body-file)
-#   issue-close <number> [--comment C]    Close issue as completed (optional comment)
+#   issue-close <number> [--comment C]    Close issue as completed (optional comment, --comment-file)
 #   issue-assign <number>                 Assign issue to current user
 #   get-project-item <node-id>            Get project item ID for an issue
 #   get-project-fields                    Get date field IDs
@@ -170,16 +170,35 @@ cmd_issue_edit() {
 
 cmd_issue_close() {
   local number="$1"; shift
-  local comment=""
+  local comment="" comment_file=""
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --comment) comment="$2"; shift 2 ;;
+      --comment-file) comment_file="$2"; shift 2 ;;
       *) echo "issue-close: unknown arg: $1" >&2; exit 1 ;;
     esac
   done
-  local -a cmd=(gh issue close "$number" --repo "$REPO" --reason completed)
-  [[ -n "$comment" ]] && cmd+=(--comment "$comment")
-  "${cmd[@]}"
+  # --comment-file overrides --comment
+  if [[ -n "$comment_file" ]]; then
+    comment=$(cat "$comment_file")
+  fi
+  # Check current issue state
+  local state
+  state=$(gh issue view "$number" --repo "$REPO" --json state --jq '.state')
+  if [[ "$state" == "OPEN" ]]; then
+    local -a cmd=(gh issue close "$number" --repo "$REPO" --reason completed)
+    [[ -n "$comment" ]] && cmd+=(--comment "$comment")
+    "${cmd[@]}"
+  else
+    echo "Issue #$number is already closed — skipping close." >&2
+    if [[ -n "$comment" ]]; then
+      if [[ -n "$comment_file" ]]; then
+        gh issue comment "$number" --repo "$REPO" --body-file "$comment_file"
+      else
+        gh issue comment "$number" --repo "$REPO" --body "$comment"
+      fi
+    fi
+  fi
 }
 
 cmd_issue_assign() {
