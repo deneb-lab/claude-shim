@@ -1,7 +1,7 @@
 ---
 name: end-implementation
 description: Close a GitHub issue - sets end date, done status, closes issue, updates parent lifecycle
-allowed-tools: Bash(github-projects.sh:*), Bash(find:*), Bash(date:*)
+allowed-tools: Bash(github-projects.sh:*), Bash(find:*)
 ---
 
 # GitHub Projects — End Implementation
@@ -85,7 +85,7 @@ This phase adds a closing comment summarizing what was implemented. The summary 
 
    a. Set the end date to today:
       ```bash
-      scripts/github-projects.sh set-date "$ITEM_ID" "$END_FIELD" "$(date +%Y-%m-%d)"
+      scripts/github-projects.sh set-date "$ITEM_ID" "$END_FIELD"
       ```
 
    b. Set status to done:
@@ -122,7 +122,7 @@ This phase adds a closing comment summarizing what was implemented. The summary 
 
         Set the parent's end date to today:
         ```bash
-        scripts/github-projects.sh set-date "$PARENT_ITEM" "$END_FIELD" "$(date +%Y-%m-%d)"
+        scripts/github-projects.sh set-date "$PARENT_ITEM" "$END_FIELD"
         ```
 
         Set the parent's status to done:
