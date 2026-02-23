@@ -39,11 +39,9 @@ If the result array is non-empty, an open parent exists — go to the **Update e
 
 For each action item, create an issue. Use a stable `action-id` slug derived from the action (component name + action type, e.g., `upgrade-trivy-operator`, `harden-oauth2-proxy-security-context`, `monitor-k0s-release`).
 
-```bash
-scripts/github-projects.sh issue-create \
-  --label "trivy-audit" \
-  --title "[Action title, e.g., Upgrade Trivy Operator 0.31.0 → 0.32.0]" \
-  --body "$(cat <<'ISSUE_EOF'
+First, use the Write tool to save the issue body to `/tmp/trivy-audit-sub-issue.md`:
+
+```markdown
 <!-- action-id: {slug} -->
 
 **Severity:** Critical/High/Medium/Low | **Risk:** safe/needs investigation/breaking changes
@@ -57,8 +55,15 @@ scripts/github-projects.sh issue-create \
 
 ## Ansible
 `roles/[role]/defaults/main.yml` → `variable_name`
-ISSUE_EOF
-)"
+```
+
+Then create the issue:
+
+```bash
+scripts/github-projects.sh issue-create \
+  --label "trivy-audit" \
+  --title "[Action title, e.g., Upgrade Trivy Operator 0.31.0 → 0.32.0]" \
+  --body-file /tmp/trivy-audit-sub-issue.md
 ```
 
 The output is the sub-issue URL (e.g., `https://github.com/elahti/deneb/issues/16`). Extract the issue number from the URL path.
@@ -75,11 +80,9 @@ The Action Plan table is built from your action plan data. For each action item,
 
 All items start as `Open` since they were just created.
 
-```bash
-scripts/github-projects.sh issue-create \
-  --label "trivy-audit" \
-  --title "Trivy Security Audit — YYYY-MM-DD" \
-  --body "$(cat <<'ISSUE_EOF'
+First, use the Write tool to save the parent issue body to `/tmp/trivy-audit-parent.md`:
+
+```markdown
 <!-- trivy-audit-parent -->
 
 ## Summary
@@ -96,8 +99,15 @@ scripts/github-projects.sh issue-create \
 ...
 
 *Last scanned: YYYY-MM-DD*
-ISSUE_EOF
-)"
+```
+
+Then create the issue:
+
+```bash
+scripts/github-projects.sh issue-create \
+  --label "trivy-audit" \
+  --title "Trivy Security Audit — YYYY-MM-DD" \
+  --body-file /tmp/trivy-audit-parent.md
 ```
 
 The output is the parent issue URL. Extract the parent issue number from the URL path.
@@ -162,8 +172,9 @@ Rebuild the Action Plan table from your action plan data cross-referenced with e
 - If the sub-issue is CLOSED: status = `:white_check_mark: Done`
 - If the sub-issue is OPEN: status = `Open`
 
-```bash
-scripts/github-projects.sh issue-edit <parent_number> --body "$(cat <<'ISSUE_EOF'
+First, use the Write tool to save the updated parent body to `/tmp/trivy-audit-parent-update.md`:
+
+```markdown
 <!-- trivy-audit-parent -->
 
 ## Summary
@@ -177,8 +188,12 @@ scripts/github-projects.sh issue-edit <parent_number> --body "$(cat <<'ISSUE_EOF
 ...
 
 *Last scanned: YYYY-MM-DD*
-ISSUE_EOF
-)"
+```
+
+Then update the issue:
+
+```bash
+scripts/github-projects.sh issue-edit <parent_number> --body-file /tmp/trivy-audit-parent-update.md
 ```
 
 **List existing sub-issues:**
