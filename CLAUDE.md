@@ -56,9 +56,16 @@ Claude Code plugin marketplace monorepo. Plugins are self-contained directories 
   1. Bump versions in both files (see rule above)
   2. Bump `metadata.version` in marketplace.json if the catalog changed
   3. Commit: `"Release <plugin-name> v<version>: <summary>"`
-  4. Tag: `git tag <plugin-name>/v<version>`
-  5. Push: `git push origin <plugin-name>/v<version>`
-- **No release notes file.** Use git tags and commit messages.
+  4. Generate release notes — plugin-scoped commits since the previous tag:
+     ```
+     git log $(git describe --tags --match '<plugin-name>/v*' --abbrev=0 2>/dev/null || git rev-list --max-parents=0 HEAD)..HEAD --pretty=format:'- %s' -- plugins/<name>/
+     ```
+  5. Create an annotated tag with the release notes as the message:
+     ```
+     git tag -a <plugin-name>/v<version> -m "<release-notes>"
+     ```
+  6. Push: `git push origin <plugin-name>/v<version>`
+- **No release notes file.** Release notes are stored in annotated tag messages.
 
 ## Commit Conventions
 
