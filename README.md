@@ -21,9 +21,9 @@ Install plugins:
 
 ### quality-check-hook (v1.0.0)
 
-Config-driven quality checks for edited files — formatting, linting, and auto-fix via PostToolUse hooks. Requires [uv](https://docs.astral.sh/uv/) on PATH.
+Config-driven quality checks for edited files — formatting, linting, and auto-fix via `PostToolUse` hooks. Requires [uv](https://docs.astral.sh/uv/) on `PATH`.
 
-Runs automatically when Claude edits a file. Commands from all matching patterns run in order, stopping on first failure. Gitignored files are skipped.
+Runs automatically when Claude edits a file. Commands from all matching patterns run in order, stopping on first failure. Gitignored files are skipped and they don't need to be configured in `exclude` list.
 
 ```json
 {
