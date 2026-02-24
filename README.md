@@ -27,6 +27,7 @@ Runs automatically when Claude edits a file. Commands from all matching patterns
 
 ```json
 {
+  "$schema": "https://raw.githubusercontent.com/elahti/claude-shim/main/plugins/quality-check-hook/claude-shim.schema.json",
   "quality-checks": {
     "include": [
       { "pattern": "**/*.{js,ts}", "commands": ["npx prettier --write", "npx eslint --fix"] },
