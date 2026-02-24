@@ -23,7 +23,21 @@ Or install a single plugin:
 
 Config-driven quality checks for edited files — formatting, linting, and auto-fix via PostToolUse hooks. Requires [uv](https://docs.astral.sh/uv/) on PATH.
 
-The hook runs automatically whenever Claude edits a file. It matches the file path against patterns in `.claude-shim.json` and runs the configured commands in order. Commands run sequentially per file (format → auto-fix → lint-check), stopping on the first failure (exit code 2 blocks Claude). Gitignored files are automatically skipped.
+Runs automatically when Claude edits a file. Commands from all matching patterns run in order, stopping on first failure. Gitignored files are skipped.
+
+```json
+{
+  "quality-checks": {
+    "include": [
+      { "pattern": "**/*.{js,ts}", "commands": ["npx prettier --write", "npx eslint --fix"] },
+      { "pattern": "**/*.ts",      "commands": ["npx tsc --noEmit"] }
+    ],
+    "exclude": ["dist"]
+  }
+}
+```
+
+Editing `src/app.ts` runs all three commands: `prettier --write` → `eslint --fix` → `tsc --noEmit`.
 
 **Skills:**
 
