@@ -1,0 +1,11 @@
+{
+  "name": "github-project-tools",
+  "description": "GitHub issue creation and implementation with project board lifecycle management",
+  "version": "0.10.2",
+  "author": {
+    "name": "elahti"
+  },
+  "repository": "https://github.com/elahti/claude-shim",
+  "license": "MIT",
+  "keywords": ["github", "issues", "project-management", "automation"]
+}

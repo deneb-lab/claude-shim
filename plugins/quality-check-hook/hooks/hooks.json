@@ -1,0 +1,17 @@
+{
+  "description": "Config-driven quality checks for edited files",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run --project \"${CLAUDE_PLUGIN_ROOT}/hook\" python -m quality_check_hook.main",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}

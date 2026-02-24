@@ -1,0 +1,6 @@
+---
+files:
+  symlink:
+    - .claude/settings.local.json
+post_create:
+  - direnv allow

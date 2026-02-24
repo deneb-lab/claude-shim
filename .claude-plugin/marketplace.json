@@ -1,0 +1,25 @@
+{
+  "name": "claude-shim-marketplace",
+  "owner": {
+    "name": "elahti"
+  },
+  "metadata": {
+    "description": "Claude Code plugins for project management and automation",
+    "version": "0.17.0"
+  },
+  "plugins": [
+    {
+      "name": "github-project-tools",
+      "source": "./plugins/github-project-tools",
+      "description": "GitHub issue creation and implementation with project board lifecycle management",
+      "version": "0.10.2",
+      "strict": true
+    },
+    {
+      "name": "quality-check-hook",
+      "source": "./plugins/quality-check-hook",
+      "description": "Config-driven quality checks for edited files — formatting, linting, auto-fix via PostToolUse hooks",
+      "version": "0.5.1"
+    }
+  ]
+}
