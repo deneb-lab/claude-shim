@@ -1,0 +1,34 @@
+{
+  "$schema": "https://raw.githubusercontent.com/elahti/claude-shim/main/plugins/quality-check-hook/claude-shim.schema.json",
+  "quality-checks": {
+    "include": [
+      {
+        "pattern": "**/*.py",
+        "commands": [
+          "uv run --project plugins/quality-check-hook/hook ruff format",
+          "uv run --project plugins/quality-check-hook/hook ruff check --fix",
+          "uv run --project plugins/quality-check-hook/hook ruff check"
+        ]
+      },
+      {
+        "pattern": "**/*.sh",
+        "commands": [
+          "shellcheck"
+        ]
+      },
+      {
+        "pattern": "**/*.{yaml,yml}",
+        "commands": [
+          "yamllint"
+        ]
+      },
+      {
+        "pattern": "**/*.json",
+        "commands": [
+          "jq ."
+        ]
+      }
+    ],
+    "exclude": []
+  }
+}
