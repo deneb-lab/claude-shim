@@ -4,13 +4,13 @@ Claude Code plugins for project management and code quality.
 
 ## Installation
 
-Install all plugins from this marketplace:
+Register the marketplace in Claude Code:
 
 ```
 /plugin marketplace add elahti/claude-shim
 ```
 
-Or install a single plugin:
+Install plugins:
 
 ```
 /plugin add elahti/claude-shim/quality-check-hook
