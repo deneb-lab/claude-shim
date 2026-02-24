@@ -92,3 +92,19 @@ class TestRunCommands:
 
         assert result.success
         assert mock_run.call_count == 2
+
+    def test_virtual_env_stripped_from_subprocess_env(self, tmp_path: Path) -> None:
+        """Subprocess should not inherit VIRTUAL_ENV from the hook's own venv."""
+        test_file = tmp_path / "test.py"
+        test_file.write_text("content")
+
+        with (
+            patch.dict("os.environ", {"VIRTUAL_ENV": "/some/venv", "PATH": "/usr/bin"}),
+            patch("quality_check_hook.runner.subprocess.run") as mock_run,
+        ):
+            mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+            run_commands(["ruff check"], str(test_file), cwd=str(tmp_path))
+
+        env_passed = mock_run.call_args.kwargs["env"]
+        assert "VIRTUAL_ENV" not in env_passed
+        assert env_passed["PATH"] == "/usr/bin"

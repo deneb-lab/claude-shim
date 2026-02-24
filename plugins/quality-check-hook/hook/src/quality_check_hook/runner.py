@@ -1,9 +1,16 @@
 from __future__ import annotations
 
+import os
 import subprocess
 from dataclasses import dataclass
 
 COMMAND_TIMEOUT_SECONDS = 30
+
+
+def _clean_env() -> dict[str, str]:
+    env = os.environ.copy()
+    env.pop("VIRTUAL_ENV", None)
+    return env
 
 
 @dataclass
@@ -16,6 +23,8 @@ def run_commands(commands: list[str], file_path: str, *, cwd: str) -> CommandRes
     if not commands:
         return CommandResult(success=True)
 
+    env = _clean_env()
+
     for command in commands:
         full_command = f"{command} {file_path}"
         try:
@@ -26,6 +35,7 @@ def run_commands(commands: list[str], file_path: str, *, cwd: str) -> CommandRes
                 text=True,
                 timeout=COMMAND_TIMEOUT_SECONDS,
                 cwd=cwd,
+                env=env,
             )
         except subprocess.TimeoutExpired:
             return CommandResult(
