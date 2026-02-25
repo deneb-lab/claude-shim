@@ -19,7 +19,7 @@ Install plugins:
 
 ## Available Plugins
 
-### quality-check-hook (v1.0.0)
+### quality-check-hook
 
 Config-driven quality checks for edited files — formatting, linting, and auto-fix via `PostToolUse` hooks. Requires [uv](https://docs.astral.sh/uv/) on `PATH`.
 
@@ -48,7 +48,7 @@ Editing `src/app.ts` runs all three commands: `prettier --write` → `eslint --f
 
 Run `/quality-check-hook:setup-quality-check-hook` to auto-detect your project's tooling and generate a config. Supports Biome, Prettier, ESLint, Ruff, Ansible, yamllint, ShellCheck, and jq.
 
-### github-project-tools (v1.0.0)
+### github-project-tools
 
 GitHub issue creation and implementation with project board lifecycle management. Requires `gh` CLI.
 

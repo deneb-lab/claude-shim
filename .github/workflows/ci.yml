@@ -17,6 +17,37 @@ jobs:
         run: |
           find . -name '*.sh' -print0 | xargs -0 shellcheck
 
+      - name: Verify shared prompts are in sync
+        run: |
+          base=plugins/github-project-tools/skills
+          failed=0
+
+          for file in preflight.md conventions.md; do
+            for skill in start-implementation end-implementation; do
+              a="$base/add-issue/prompts/$file"
+              b="$base/$skill/prompts/$file"
+              if ! diff -q "$a" "$b" > /dev/null 2>&1; then
+                echo "MISMATCH: $file differs"
+                failed=1
+              fi
+            done
+          done
+
+          for file in setup.md parse-issue-arg.md; do
+            a="$base/start-implementation/prompts/$file"
+            b="$base/end-implementation/prompts/$file"
+            if ! diff -q "$a" "$b" > /dev/null 2>&1; then
+              echo "MISMATCH: $file differs"
+              failed=1
+            fi
+          done
+
+          if [ "$failed" -eq 1 ]; then
+            echo "Shared prompt files are out of sync. Update all copies."
+            exit 1
+          fi
+          echo "All shared prompts are in sync."
+
       - name: Validate JSON files
         run: |
           for f in $(find . -name '*.json' -not -path './.git/*'); do
@@ -39,7 +70,9 @@ jobs:
         run: uv run --project plugins/quality-check-hook/hook ruff check
 
       - name: Ruff format check
-        run: uv run --project plugins/quality-check-hook/hook ruff format --check
+        run: >-
+          uv run --project plugins/quality-check-hook/hook
+          ruff format --check
 
   python-typecheck:
     runs-on: claude-shim-runner
