@@ -1,6 +1,6 @@
 # Claude Shim Marketplace
 
-Claude Code plugins for project management and code quality.
+Collection of quality-of-life Claude Code hooks.
 
 ## Installation
 
@@ -21,9 +21,15 @@ Install plugins:
 
 ### quality-check-hook
 
-Config-driven quality checks for edited files — formatting, linting, and auto-fix via `PostToolUse` hooks. Requires [uv](https://docs.astral.sh/uv/) on `PATH`.
+Config-driven quality checks for edited files. Runs automatically when Claude edits a file. Commands from all matching patterns run in order, stopping on first failure. Gitignored files are skipped and they don't need to be configured in `exclude` list.
 
-Runs automatically when Claude edits a file. Commands from all matching patterns run in order, stopping on first failure. Gitignored files are skipped and they don't need to be configured in `exclude` list.
+**Installation:**
+
+Run `/quality-check-hook:setup-quality-check-hook` to auto-detect your project's tooling and generate a config. Also see claude-shim's own [.claude-shim.json](https://github.com/elahti/claude-shim/blob/main/.claude-shim.json).
+
+**Example:**
+
+In the example below editing `src/app.ts` runs all three commands: `prettier --write` → `eslint --fix` → `tsc --noEmit`.
 
 ```json
 {
@@ -37,18 +43,6 @@ Runs automatically when Claude edits a file. Commands from all matching patterns
   }
 }
 ```
-
-Editing `src/app.ts` runs all three commands: `prettier --write` → `eslint --fix` → `tsc --noEmit`.
-
-Also see claude-shim's own [.claude-shim.json](https://github.com/elahti/claude-shim/blob/main/.claude-shim.json).
-
-**Skills:**
-
-| Skill | Description |
-|---|---|
-| `quality-check-hook:setup-quality-check-hook` | Set up or modify `.claude-shim.json` quality checks for the current repository |
-
-Run `/quality-check-hook:setup-quality-check-hook` to auto-detect your project's tooling and generate a config. Supports Biome, Prettier, ESLint, Ruff, Ansible, yamllint, ShellCheck, and jq.
 
 ### github-project-tools
 
