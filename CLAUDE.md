@@ -10,6 +10,20 @@ Claude Code plugin marketplace monorepo. Plugins are self-contained directories 
 - `plugins/<name>/skills/<skill-name>/prompts/` — Prompt files referenced by the skill
 - `plugins/<name>/scripts/` — Shell scripts bundled with the plugin
 
+## Prerequisites
+
+- `uv` — Python package manager (quality-check-hook)
+- `shellcheck` — Shell script linter (CI enforces on all `.sh` files)
+- `gh` — GitHub CLI (github-project-tools scripts)
+
+## CI
+
+CI runs on every push/PR (`.github/workflows/ci.yml`):
+- `shellcheck` on all `.sh` files
+- Shared prompt sync verification (github-project-tools)
+- JSON validation on all `.json` files
+- Python lint, typecheck, and tests (quality-check-hook)
+
 ## Adding a New Plugin
 
 1. Create `plugins/<name>/.claude-plugin/plugin.json`:
