@@ -40,6 +40,8 @@ Runs automatically when Claude edits a file. Commands from all matching patterns
 
 Editing `src/app.ts` runs all three commands: `prettier --write` → `eslint --fix` → `tsc --noEmit`.
 
+Also see claude-shim's own [.claude-shim.json](https://github.com/elahti/claude-shim/blob/main/.claude-shim.json).
+
 **Skills:**
 
 | Skill | Description |
