@@ -7,14 +7,14 @@ Collection of quality-of-life Claude Code hooks.
 Register the marketplace in Claude Code:
 
 ```
-/plugin marketplace add elahti/claude-shim
+/plugin marketplace add elahti/claude-shim-marketplace
 ```
 
 Install plugins:
 
 ```
-/plugin add elahti/claude-shim/quality-check-hook
-/plugin add elahti/claude-shim/github-project-tools
+/plugin add elahti/claude-shim-marketplace/quality-check-hook
+/plugin add elahti/claude-shim-marketplace/github-project-tools
 ```
 
 ## Available Plugins
