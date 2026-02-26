@@ -12,6 +12,8 @@ Start working on a GitHub issue: assign yourself, update project board dates and
 
 Follow the steps in [prompts/preflight.md](prompts/preflight.md).
 
+All script commands below use `<resolved-path>` to mean the absolute path found during preflight.
+
 ## Phase 1: Setup
 
 Follow the steps in [prompts/setup.md](prompts/setup.md).
@@ -22,7 +24,7 @@ Follow the steps in [prompts/setup.md](prompts/setup.md).
 
 2. Fetch the issue details:
    ```bash
-   scripts/github-projects.sh issue-view-full <number>
+   <resolved-path> issue-view-full <number>
    ```
    Save the JSON output. Extract the issue `id` as `NODE_ID`, `title`, `body`, and `state`.
 
@@ -30,7 +32,7 @@ Follow the steps in [prompts/setup.md](prompts/setup.md).
 
 4. Check for a parent issue:
    ```bash
-   scripts/github-projects.sh get-parent "$NODE_ID"
+   <resolved-path> get-parent "$NODE_ID"
    ```
    If the result is not `null`, save:
    - `PARENT_ID` from `.id`
@@ -43,12 +45,12 @@ Before making any changes, note the current status of the issue (and parent if a
 
 1. Assign the issue to yourself:
    ```bash
-   scripts/github-projects.sh issue-assign <number>
+   <resolved-path> issue-assign <number>
    ```
 
 2. **If a parent issue exists** (detected in Phase 2, step 4), assign yourself to the parent issue:
    ```bash
-   scripts/github-projects.sh issue-assign <PARENT_NUMBER>
+   <resolved-path> issue-assign <PARENT_NUMBER>
    ```
    This is idempotent — no error if already assigned.
 
@@ -56,30 +58,30 @@ Before making any changes, note the current status of the issue (and parent if a
 
    a. Check if the issue is already on the project board:
       ```bash
-      scripts/github-projects.sh get-project-item "$NODE_ID"
+      <resolved-path> get-project-item "$NODE_ID"
       ```
       - If the output is **non-empty**, that value is `ITEM_ID`.
       - If the output is **empty**, add the issue to the project:
         ```bash
-        scripts/github-projects.sh add-to-project "$NODE_ID"
+        <resolved-path> add-to-project "$NODE_ID"
         ```
         The output of `add-to-project` is `ITEM_ID`.
 
    b. Set the start date to today:
       ```bash
-      scripts/github-projects.sh set-date "$ITEM_ID" "$START_FIELD"
+      <resolved-path> set-date "$ITEM_ID" "$START_FIELD"
       ```
 
    c. Set status to in-progress:
       ```bash
-      scripts/github-projects.sh set-status "$ITEM_ID" in-progress
+      <resolved-path> set-status "$ITEM_ID" in-progress
       ```
 
 4. **If a parent issue exists AND a project is available:**
 
    a. Get the parent's start date:
       ```bash
-      scripts/github-projects.sh get-start-date "$PARENT_ID"
+      <resolved-path> get-start-date "$PARENT_ID"
       ```
       Save `PARENT_ITEM` from `.item_id` and `PARENT_DATE` from `.date`.
 
@@ -88,10 +90,10 @@ Before making any changes, note the current status of the issue (and parent if a
       - **Only proceed if the user confirms.**
       - If confirmed:
         ```bash
-        scripts/github-projects.sh set-date "$PARENT_ITEM" "$START_FIELD"
+        <resolved-path> set-date "$PARENT_ITEM" "$START_FIELD"
         ```
         ```bash
-        scripts/github-projects.sh set-status "$PARENT_ITEM" in-progress
+        <resolved-path> set-status "$PARENT_ITEM" in-progress
         ```
 
 5. **Set up the workspace.**
@@ -159,12 +161,12 @@ When the user indicates they are done (or you have completed the implementation)
   - **Option B: Reset** — Restore the issue and parent (if touched) to their original state before this skill ran:
     - Reset the issue status:
       ```bash
-      scripts/github-projects.sh set-status "$ITEM_ID" todo
+      <resolved-path> set-status "$ITEM_ID" todo
       ```
     - Note: there is no `clear-date` subcommand, so the start date cannot be removed. Resetting the status back to `todo` is the best approximation.
     - If the parent was touched, reset its status to whatever it was before Phase 3:
       ```bash
-      scripts/github-projects.sh set-status "$PARENT_ITEM" <original-status>
+      <resolved-path> set-status "$PARENT_ITEM" <original-status>
       ```
 
 ## Important Notes

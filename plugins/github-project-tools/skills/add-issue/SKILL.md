@@ -11,6 +11,8 @@ Create a new GitHub issue from conversation context and add it to the project bo
 
 Follow the steps in [prompts/preflight.md](prompts/preflight.md).
 
+All script commands below use `<resolved-path>` to mean the absolute path found during preflight.
+
 ## Phase 1: Gather Context
 
 Read the conversation context and any arguments provided. You need:
@@ -27,7 +29,7 @@ The default project is auto-detected from the repo owner's GitHub projects.
 
 1. Create the issue:
    ```bash
-   scripts/github-projects.sh issue-create --title "<title>" --body "<body>"
+   <resolved-path> issue-create --title "<title>" --body "<body>"
    ```
 
    If the user specified a label, add `--label "<label>"`.
@@ -36,21 +38,21 @@ The default project is auto-detected from the repo owner's GitHub projects.
 
 2. Get the issue node ID:
    ```bash
-   scripts/github-projects.sh issue-view <number> --json id --jq '.id'
+   <resolved-path> issue-view <number> --json id --jq '.id'
    ```
 
    Save the output as `NODE_ID`.
 
 3. Add to project:
    ```bash
-   scripts/github-projects.sh add-to-project "$NODE_ID"
+   <resolved-path> add-to-project "$NODE_ID"
    ```
 
    Save the output as `ITEM_ID`.
 
 4. Set status to "Todo":
    ```bash
-   scripts/github-projects.sh set-status "$ITEM_ID" todo
+   <resolved-path> set-status "$ITEM_ID" todo
    ```
 
 ## Phase 2.5: Link Parent (conditional)
@@ -60,18 +62,18 @@ Skip this phase if no parent was specified in Phase 1.
 1. Resolve the parent issue's node ID:
    - Same-repo (`#N`):
      ```bash
-     scripts/github-projects.sh issue-view <N> --json id --jq '.id'
+     <resolved-path> issue-view <N> --json id --jq '.id'
      ```
    - Cross-repo (full URL):
      ```bash
-     scripts/github-projects.sh issue-view <url> --json id --jq '.id'
+     <resolved-path> issue-view <url> --json id --jq '.id'
      ```
 
    Save the output as `PARENT_NODE_ID`.
 
 2. Link the new issue as a sub-issue of the parent:
    ```bash
-   scripts/github-projects.sh set-parent "$NODE_ID" "$PARENT_NODE_ID"
+   <resolved-path> set-parent "$NODE_ID" "$PARENT_NODE_ID"
    ```
 
 ## Phase 3: Report
