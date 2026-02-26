@@ -18,6 +18,8 @@ When `REPO_OVERRIDE` is set (either from start-implementation handoff or parsed 
 
 Follow the steps in [prompts/preflight.md](prompts/preflight.md).
 
+All script commands below use `<resolved-path>` to mean the absolute path found during preflight.
+
 ## Phase 1: Setup (conditional)
 
 **If state from `start-implementation` is already in the conversation context** (NODE_ID, ITEM_ID, field IDs, and parent info are known), **skip to Phase 2.5.**
@@ -34,7 +36,7 @@ Otherwise:
 
 2. Fetch the issue details:
    ```bash
-   scripts/github-projects.sh issue-view-full <number>
+   <resolved-path> issue-view-full <number>
    ```
    Save the JSON output. Extract the issue `id` as `NODE_ID`.
 
@@ -42,13 +44,13 @@ Otherwise:
 
 4. **If a project is available**, get the project item ID:
    ```bash
-   scripts/github-projects.sh get-project-item "$NODE_ID"
+   <resolved-path> get-project-item "$NODE_ID"
    ```
    Save the output as `ITEM_ID`.
 
 5. Check for a parent issue:
    ```bash
-   scripts/github-projects.sh get-parent "$NODE_ID"
+   <resolved-path> get-parent "$NODE_ID"
    ```
    If the result is not `null`, save:
    - `PARENT_ID` from `.id`
@@ -85,30 +87,30 @@ This phase adds a closing comment summarizing what was implemented. The summary 
 
    a. Set the end date to today:
       ```bash
-      scripts/github-projects.sh set-date "$ITEM_ID" "$END_FIELD"
+      <resolved-path> set-date "$ITEM_ID" "$END_FIELD"
       ```
 
    b. Set status to done:
       ```bash
-      scripts/github-projects.sh set-status "$ITEM_ID" done
+      <resolved-path> set-status "$ITEM_ID" done
       ```
 
 2. Close the issue. If `SUMMARY` is non-empty (from Phase 2.5), write it to a temp file and include it as a closing comment:
    - Write the summary to `/tmp/issue-close-comment.md` using the Write tool
    - Then close:
      ```bash
-     scripts/github-projects.sh issue-close <number> --comment-file /tmp/issue-close-comment.md
+     <resolved-path> issue-close <number> --comment-file /tmp/issue-close-comment.md
      ```
    If `SUMMARY` is empty, close without a comment:
    ```bash
-   scripts/github-projects.sh issue-close <number>
+   <resolved-path> issue-close <number>
    ```
 
 3. **If a parent issue exists** (regardless of whether a project is available):
 
    a. Count open sub-issues on the parent:
       ```bash
-      scripts/github-projects.sh count-open-sub-issues "$PARENT_ID"
+      <resolved-path> count-open-sub-issues "$PARENT_ID"
       ```
 
    b. If the count is **0** (all sub-issues are now resolved):
@@ -118,23 +120,23 @@ This phase adds a closing comment summarizing what was implemented. The summary 
 
         Get the parent's project item ID:
         ```bash
-        scripts/github-projects.sh get-project-item "$PARENT_ID"
+        <resolved-path> get-project-item "$PARENT_ID"
         ```
         Save the output as `PARENT_ITEM`.
 
         Set the parent's end date to today:
         ```bash
-        scripts/github-projects.sh set-date "$PARENT_ITEM" "$END_FIELD"
+        <resolved-path> set-date "$PARENT_ITEM" "$END_FIELD"
         ```
 
         Set the parent's status to done:
         ```bash
-        scripts/github-projects.sh set-status "$PARENT_ITEM" done
+        <resolved-path> set-status "$PARENT_ITEM" done
         ```
 
       - If confirmed, close the parent issue (regardless of whether a project is available):
         ```bash
-        scripts/github-projects.sh issue-close <parent_number>
+        <resolved-path> issue-close <parent_number>
         ```
 
       - If the user declines, leave the parent as-is.

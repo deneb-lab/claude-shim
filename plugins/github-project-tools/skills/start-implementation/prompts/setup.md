@@ -2,7 +2,7 @@ The script auto-detects the current repository from the git remote. When `REPO_O
 
 1. Get project fields (date field IDs):
    ```bash
-   scripts/github-projects.sh get-project-fields
+   <resolved-path> get-project-fields
    ```
    This returns JSON with `start` and `end` field IDs. Save these as `START_FIELD` and `END_FIELD`.
 

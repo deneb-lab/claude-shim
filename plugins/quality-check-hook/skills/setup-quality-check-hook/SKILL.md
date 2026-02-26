@@ -7,6 +7,12 @@ description: Set up or modify .claude-shim.json quality checks for the current r
 
 Configure quality checks that run automatically when Claude edits files in this repository.
 
+## Phase 0: Preflight
+
+Follow the steps in [prompts/preflight.md](prompts/preflight.md).
+
+All script commands below use `<resolved-path>` to mean the absolute path found during preflight.
+
 ## How the Hook Works
 
 Understanding the execution model is essential for writing correct commands.
@@ -34,18 +40,6 @@ Understanding the execution model is essential for writing correct commands.
 
 **Timeouts:** Each command has a 30-second timeout. If a command exceeds this, it is killed and the hook fails.
 
-## Prerequisites
-
-Run `scripts/setup-quality-check-hook.sh check-uv` to verify that `uv` is installed.
-
-If the command fails, stop and tell the user:
-
-> The quality-check-hook plugin requires uv to run. Install it with:
-> `curl -LsSf https://astral.sh/uv/install.sh | sh`
-> See https://docs.astral.sh/uv/getting-started/installation/ for other methods.
-
-Do not proceed until `uv` is available.
-
 ## Step 1: Check for Existing Config
 
 Look for `.claude-shim.json` in the repository root.
@@ -58,7 +52,7 @@ Look for `.claude-shim.json` in the repository root.
 
 ## Step 2: Detect Package Runner
 
-Run `scripts/setup-quality-check-hook.sh detect-runner` to determine the JavaScript/TypeScript package runner. The script checks lockfiles in the repository root and outputs the runner name (`bunx`, `pnpx`, or `npx`).
+Run `<resolved-path> detect-runner` to determine the JavaScript/TypeScript package runner. The script checks lockfiles in the repository root and outputs the runner name (`bunx`, `pnpx`, or `npx`).
 
 Use the detected runner (referred to as `{runner}` below) in all JS/TS commands. Present it to the user for confirmation: "Detected `{runner}` as the package runner. Change?"
 
@@ -98,7 +92,7 @@ Build the exclude list using these candidates based on detected tooling:
 **Python candidates:** `.venv`, `__pycache__`, `.mypy_cache`, `.ruff_cache`, `.pytest_cache`
 **General candidates:** `coverage`, `.cache`
 
-Run `scripts/setup-quality-check-hook.sh build-excludes <candidates...>` where `<candidates...>` is the space-separated list of directories from above. The script outputs one directory per line — only directories that actually exist in the repo AND are not gitignored.
+Run `<resolved-path> build-excludes <candidates...>` where `<candidates...>` is the space-separated list of directories from above. The script outputs one directory per line — only directories that actually exist in the repo AND are not gitignored.
 
 Use the script output as the exclude list.
 
