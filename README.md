@@ -1,6 +1,6 @@
 # Claude Shim Marketplace
 
-Collection of quality-of-life Claude Code hooks.
+Collection of quality-of-life Claude Code hooks. Battle-tested and used in commercial projects.
 
 ## Installation
 
@@ -25,6 +25,8 @@ Config-driven quality checks for edited files. Runs automatically when Claude ed
 
 **Installation:**
 
+Requires [uv](https://github.com/astral-sh/uv) to be installed.
+
 Run `/quality-check-hook:setup-quality-check-hook` to auto-detect your project's tooling and generate a config. Also see claude-shim's own [.claude-shim.json](https://github.com/elahti/claude-shim/blob/main/.claude-shim.json).
 
 **Example:**
@@ -36,10 +38,23 @@ In the example below editing `src/app.ts` runs all three commands: `prettier --w
   "$schema": "https://raw.githubusercontent.com/elahti/claude-shim/main/plugins/quality-check-hook/claude-shim.schema.json",
   "quality-checks": {
     "include": [
-      { "pattern": "**/*.{js,ts}", "commands": ["npx prettier --write", "npx eslint --fix"] },
-      { "pattern": "**/*.ts",      "commands": ["npx tsc --noEmit"] }
+      {
+        "pattern": "**/*.{js,ts}",
+        "commands": [
+          "npx prettier --write",
+          "npx eslint --fix"
+        ]
+      },
+      {
+        "pattern": "**/*.ts",
+        "commands": [
+          "npx tsc --noEmit"
+        ]
+      }
     ],
-    "exclude": ["dist"]
+    "exclude": [
+      "dist"
+    ]
   }
 }
 ```
