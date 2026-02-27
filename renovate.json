@@ -4,7 +4,9 @@
     "config:best-practices",
     "customManagers:dockerfileVersions"
   ],
-  "labels": ["dependencies"],
+  "labels": [
+    "dependencies"
+  ],
   "lockFileMaintenance": {
     "enabled": true,
     "automerge": true
@@ -13,31 +15,48 @@
   "packageRules": [
     {
       "description": "Ignore private registry images",
-      "matchDatasources": ["docker"],
-      "matchPackagePatterns": ["^registry\\.phoebe\\.fi/"],
-      "enabled": false
+      "matchDatasources": [
+        "docker"
+      ],
+      "enabled": false,
+      "matchPackageNames": [
+        "/^registry\\.phoebe\\.fi//"
+      ]
     },
     {
       "description": "Group all non-major updates into a single PR",
       "groupName": "all non-major dependencies",
-      "matchUpdateTypes": ["minor", "patch", "digest", "pin"],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "digest",
+        "pin"
+      ],
       "automerge": true
     },
     {
       "description": "Group all major updates into a single PR (requires manual review)",
       "groupName": "all major dependencies",
-      "matchUpdateTypes": ["major"],
+      "matchUpdateTypes": [
+        "major"
+      ],
       "automerge": false
     }
   ],
   "rangeStrategy": "pin",
-  "schedule": ["before 6am on monday"],
+  "schedule": [
+    "before 6am on monday"
+  ],
   "semanticCommits": "enabled",
   "timezone": "UTC",
   "vulnerabilityAlerts": {
     "automerge": true,
     "enabled": true,
-    "labels": ["security"],
-    "schedule": ["at any time"]
+    "labels": [
+      "security"
+    ],
+    "schedule": [
+      "at any time"
+    ]
   }
 }
