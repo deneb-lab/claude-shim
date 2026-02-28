@@ -81,23 +81,23 @@ jobs:
 
       - name: Ruff check (quality-check-hook)
         run: >-
-          uv run --project
+          uv run --directory
           plugins/quality-check-hook/hook ruff check
 
       - name: Ruff format (quality-check-hook)
         run: >-
-          uv run --project
+          uv run --directory
           plugins/quality-check-hook/hook
           ruff format --check
 
       - name: Ruff check (github-project-tools)
         run: >-
-          uv run --project
+          uv run --directory
           plugins/github-project-tools/hook ruff check
 
       - name: Ruff format (github-project-tools)
         run: >-
-          uv run --project
+          uv run --directory
           plugins/github-project-tools/hook
           ruff format --check
 
@@ -114,12 +114,12 @@ jobs:
 
       - name: Pyright (quality-check-hook)
         run: >-
-          uv run --project
+          uv run --directory
           plugins/quality-check-hook/hook pyright
 
       - name: Pyright (github-project-tools)
         run: >-
-          uv run --project
+          uv run --directory
           plugins/github-project-tools/hook pyright
 
   python-test:
@@ -135,10 +135,10 @@ jobs:
 
       - name: Pytest (quality-check-hook)
         run: >-
-          uv run --project
+          uv run --directory
           plugins/quality-check-hook/hook pytest -v
 
       - name: Pytest (github-project-tools)
         run: >-
-          uv run --project
+          uv run --directory
           plugins/github-project-tools/hook pytest -v
