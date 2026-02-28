@@ -1,0 +1,57 @@
+[project]
+name = "github-project-tools"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic==2.12.5",
+]
+
+[build-system]
+build-backend = "uv_build"
+requires = ["uv_build"]
+
+[dependency-groups]
+dev = [
+    "pyright==1.1.408",
+    "pytest==9.0.2",
+    "ruff==0.15.1",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "COM",  # flake8-commas
+    "E",    # pycodestyle errors
+    "F",    # Pyflakes
+    "I",    # isort
+    "PERF", # perflint
+    "RUF",  # Ruff-specific
+    "SIM",  # flake8-simplify
+    "UP",   # pyupgrade
+    "W",    # pycodestyle warnings
+]
+ignore = ["COM812", "E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.pyright]
+include = ["src", "tests"]
+pythonVersion = "3.12"
+typeCheckingMode = "strict"
+reportMissingParameterType = "error"
+reportUnknownArgumentType = "error"
+reportUnknownMemberType = "error"
+reportUnknownParameterType = "error"
+reportUnknownVariableType = "error"
+reportUnusedImport = "error"
+reportUnusedVariable = "error"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
