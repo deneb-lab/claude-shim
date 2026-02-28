@@ -62,3 +62,393 @@ class TestPreflight:
 
         assert exit_code == 0
         assert "OK" in capsys.readouterr().out
+
+
+class TestRepoDetection:
+    def test_auto_detect_repo(self, capsys: pytest.CaptureFixture[str]) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[],
+                    returncode=0,
+                    stdout="owner/repo\n",
+                    stderr="",
+                ),
+                subprocess.CompletedProcess(
+                    args=[],
+                    returncode=0,
+                    stdout='{"id":"I_1","number":1,"title":"Test","body":"","state":"OPEN"}',
+                    stderr="",
+                ),
+            ]
+            exit_code = main(["issue-view-full", "1"])
+        assert exit_code == 0
+
+    def test_repo_override_skips_detection(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout='{"id":"I_1"}', stderr=""
+            )
+            exit_code = main(["--repo", "other/repo", "issue-view-full", "1"])
+        assert exit_code == 0
+        call_args = mock_run.call_args[0][0]
+        assert "--repo" in call_args
+        assert "other/repo" in call_args
+
+    def test_auto_detect_fails_exits_1(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=1, stdout="", stderr="not a git repo"
+            )
+            with pytest.raises(SystemExit, match="1"):
+                main(["issue-view-full", "1"])
+
+
+class TestIssueView:
+    def test_issue_view_passthrough(self, capsys: pytest.CaptureFixture[str]) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout="Issue #42: My issue\nBody text here",
+                stderr="",
+            )
+            exit_code = main(["--repo", "owner/repo", "issue-view", "42", "--web"])
+        assert exit_code == 0
+        out = capsys.readouterr().out
+        assert "Issue #42" in out
+        call_args = mock_run.call_args[0][0]
+        assert "issue" in call_args
+        assert "view" in call_args
+        assert "42" in call_args
+        assert "--web" in call_args
+
+    def test_issue_view_full(self, capsys: pytest.CaptureFixture[str]) -> None:
+        json_output = (
+            '{"id":"I_1","number":1,"title":"Test","body":"desc","state":"OPEN"}'
+        )
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout=json_output, stderr=""
+            )
+            exit_code = main(["--repo", "owner/repo", "issue-view-full", "1"])
+        assert exit_code == 0
+        out = capsys.readouterr().out
+        assert json.loads(out)["state"] == "OPEN"
+
+
+class TestIssueCreate:
+    def test_create_with_title_and_body(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout="https://github.com/owner/repo/issues/99\n",
+                stderr="",
+            )
+            exit_code = main(
+                [
+                    "--repo",
+                    "owner/repo",
+                    "issue-create",
+                    "--title",
+                    "My Title",
+                    "--body",
+                    "My Body",
+                ]
+            )
+        assert exit_code == 0
+        call_args = mock_run.call_args[0][0]
+        assert "--title" in call_args
+        assert "My Title" in call_args
+        assert "--body" in call_args
+        assert "My Body" in call_args
+
+    def test_create_with_label(self, capsys: pytest.CaptureFixture[str]) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout="https://github.com/owner/repo/issues/99\n",
+                stderr="",
+            )
+            exit_code = main(
+                [
+                    "--repo",
+                    "owner/repo",
+                    "issue-create",
+                    "--title",
+                    "T",
+                    "--body",
+                    "B",
+                    "--label",
+                    "bug",
+                ]
+            )
+        assert exit_code == 0
+        call_args = mock_run.call_args[0][0]
+        assert "--label" in call_args
+        assert "bug" in call_args
+
+    def test_create_with_body_file(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        body_file = tmp_path / "body.md"
+        body_file.write_text("Body from file")
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout="https://github.com/owner/repo/issues/99\n",
+                stderr="",
+            )
+            exit_code = main(
+                [
+                    "--repo",
+                    "owner/repo",
+                    "issue-create",
+                    "--title",
+                    "T",
+                    "--body-file",
+                    str(body_file),
+                ]
+            )
+        assert exit_code == 0
+        call_args = mock_run.call_args[0][0]
+        assert "--body" in call_args
+        assert "Body from file" in call_args
+
+    def test_create_missing_title_exits_1(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh"):
+            exit_code = main(["--repo", "owner/repo", "issue-create", "--body", "B"])
+        assert exit_code == 1
+        assert "title" in capsys.readouterr().err.lower()
+
+    def test_create_missing_body_exits_1(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh"):
+            exit_code = main(["--repo", "owner/repo", "issue-create", "--title", "T"])
+        assert exit_code == 1
+        assert "body" in capsys.readouterr().err.lower()
+
+
+class TestIssueEdit:
+    def test_edit_with_body(self, capsys: pytest.CaptureFixture[str]) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="", stderr=""
+            )
+            exit_code = main(
+                [
+                    "--repo",
+                    "owner/repo",
+                    "issue-edit",
+                    "42",
+                    "--body",
+                    "Updated body",
+                ]
+            )
+        assert exit_code == 0
+        call_args = mock_run.call_args[0][0]
+        assert "edit" in call_args
+        assert "42" in call_args
+        assert "--body" in call_args
+        assert "Updated body" in call_args
+
+    def test_edit_with_body_file(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        body_file = tmp_path / "body.md"
+        body_file.write_text("File body content")
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="", stderr=""
+            )
+            exit_code = main(
+                [
+                    "--repo",
+                    "owner/repo",
+                    "issue-edit",
+                    "42",
+                    "--body-file",
+                    str(body_file),
+                ]
+            )
+        assert exit_code == 0
+        call_args = mock_run.call_args[0][0]
+        assert "--body" in call_args
+        assert "File body content" in call_args
+
+    def test_edit_missing_body_exits_1(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh"):
+            exit_code = main(["--repo", "owner/repo", "issue-edit", "42"])
+        assert exit_code == 1
+        assert "body" in capsys.readouterr().err.lower()
+
+
+class TestIssueAssign:
+    def test_assigns_to_me(self) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout="https://github.com/owner/repo/issues/42\n",
+                stderr="",
+            )
+            exit_code = main(["--repo", "owner/repo", "issue-assign", "42"])
+        assert exit_code == 0
+        call_args = mock_run.call_args[0][0]
+        assert "--add-assignee" in call_args
+        assert "@me" in call_args
+
+
+class TestIssueClose:
+    def test_closes_open_issue(self) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="OPEN\n", stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="", stderr=""
+                ),
+            ]
+            exit_code = main(["--repo", "owner/repo", "issue-close", "42"])
+        assert exit_code == 0
+        # Second call should be the close command
+        close_args = mock_run.call_args_list[1][0][0]
+        assert "close" in close_args
+        assert "--reason" in close_args
+        assert "completed" in close_args
+
+    def test_closes_with_comment(self) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="OPEN\n", stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="", stderr=""
+                ),
+            ]
+            exit_code = main(
+                [
+                    "--repo",
+                    "owner/repo",
+                    "issue-close",
+                    "42",
+                    "--comment",
+                    "Done!",
+                ]
+            )
+        assert exit_code == 0
+        close_args = mock_run.call_args_list[1][0][0]
+        assert "--comment" in close_args
+        assert "Done!" in close_args
+
+    def test_closes_with_comment_file(self, tmp_path: Path) -> None:
+        comment_file = tmp_path / "comment.md"
+        comment_file.write_text("Comment from file")
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="OPEN\n", stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="", stderr=""
+                ),
+            ]
+            exit_code = main(
+                [
+                    "--repo",
+                    "owner/repo",
+                    "issue-close",
+                    "42",
+                    "--comment-file",
+                    str(comment_file),
+                ]
+            )
+        assert exit_code == 0
+        close_args = mock_run.call_args_list[1][0][0]
+        assert "--comment" in close_args
+        assert "Comment from file" in close_args
+
+    def test_skips_close_for_closed_issue(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="CLOSED\n", stderr=""
+            )
+            exit_code = main(["--repo", "owner/repo", "issue-close", "42"])
+        assert exit_code == 0
+        assert "already closed" in capsys.readouterr().err.lower()
+
+    def test_closed_issue_with_comment_adds_comment(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="CLOSED\n", stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="", stderr=""
+                ),
+            ]
+            exit_code = main(
+                [
+                    "--repo",
+                    "owner/repo",
+                    "issue-close",
+                    "42",
+                    "--comment",
+                    "Late comment",
+                ]
+            )
+        assert exit_code == 0
+        comment_args = mock_run.call_args_list[1][0][0]
+        assert "comment" in comment_args
+        assert "--body" in comment_args
+        assert "Late comment" in comment_args
+
+    def test_closed_issue_with_comment_file_uses_body_file(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        comment_file = tmp_path / "comment.md"
+        comment_file.write_text("File comment")
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="CLOSED\n", stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="", stderr=""
+                ),
+            ]
+            exit_code = main(
+                [
+                    "--repo",
+                    "owner/repo",
+                    "issue-close",
+                    "42",
+                    "--comment-file",
+                    str(comment_file),
+                ]
+            )
+        assert exit_code == 0
+        comment_args = mock_run.call_args_list[1][0][0]
+        assert "comment" in comment_args
+        assert "--body-file" in comment_args
+        assert str(comment_file) in comment_args
