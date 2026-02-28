@@ -35,7 +35,7 @@ gh repo view --json nameWithOwner -q .nameWithOwner
 
 Save as `REPO` (e.g., `owner/repo`). Extract `OWNER` as the part before `/`.
 
-Confirm with the user: "Detected repository: `REPO`. Correct?"
+Confirm with the user: "Detected repository: `REPO`. Issues will be created and managed in this repository. Correct?"
 
 ## Step 3: Detect Project
 
