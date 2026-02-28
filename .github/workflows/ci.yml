@@ -23,7 +23,9 @@ jobs:
           failed=0
 
           for file in preflight.md conventions.md; do
-            for skill in start-implementation end-implementation; do
+            for skill in start-implementation \
+                        end-implementation \
+                        setup-github-project-tools; do
               a="$base/add-issue/prompts/$file"
               b="$base/$skill/prompts/$file"
               if ! diff -q "$a" "$b" > /dev/null 2>&1; then
@@ -33,7 +35,18 @@ jobs:
             done
           done
 
-          for file in setup.md parse-issue-arg.md; do
+          for file in setup.md; do
+            for skill in end-implementation add-issue; do
+              a="$base/start-implementation/prompts/$file"
+              b="$base/$skill/prompts/$file"
+              if ! diff -q "$a" "$b" > /dev/null 2>&1; then
+                echo "MISMATCH: $file differs"
+                failed=1
+              fi
+            done
+          done
+
+          for file in parse-issue-arg.md; do
             a="$base/start-implementation/prompts/$file"
             b="$base/end-implementation/prompts/$file"
             if ! diff -q "$a" "$b" > /dev/null 2>&1; then
@@ -66,12 +79,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6
 
-      - name: Ruff check
-        run: uv run --project plugins/quality-check-hook/hook ruff check
-
-      - name: Ruff format check
+      - name: Ruff check (quality-check-hook)
         run: >-
-          uv run --project plugins/quality-check-hook/hook
+          uv run --project
+          plugins/quality-check-hook/hook ruff check
+
+      - name: Ruff format (quality-check-hook)
+        run: >-
+          uv run --project
+          plugins/quality-check-hook/hook
+          ruff format --check
+
+      - name: Ruff check (github-project-tools)
+        run: >-
+          uv run --project
+          plugins/github-project-tools/hook ruff check
+
+      - name: Ruff format (github-project-tools)
+        run: >-
+          uv run --project
+          plugins/github-project-tools/hook
           ruff format --check
 
   python-typecheck:
@@ -85,8 +112,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6
 
-      - name: Pyright
-        run: uv run --project plugins/quality-check-hook/hook pyright
+      - name: Pyright (quality-check-hook)
+        run: >-
+          uv run --project
+          plugins/quality-check-hook/hook pyright
+
+      - name: Pyright (github-project-tools)
+        run: >-
+          uv run --project
+          plugins/github-project-tools/hook pyright
 
   python-test:
     runs-on: claude-shim-runner
@@ -99,5 +133,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6
 
-      - name: Pytest
-        run: uv run --project plugins/quality-check-hook/hook pytest -v
+      - name: Pytest (quality-check-hook)
+        run: >-
+          uv run --project
+          plugins/quality-check-hook/hook pytest -v
+
+      - name: Pytest (github-project-tools)
+        run: >-
+          uv run --project
+          plugins/github-project-tools/hook pytest -v
