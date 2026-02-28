@@ -83,15 +83,21 @@ If no "Status" field is found, present all single-select fields and ask the user
 
 ## Step 5: Detect Status Mappings
 
-Using the status field's `.options` array from Step 4, auto-match option names to logical roles:
+The plugin automatically updates issue status as you work — it needs to know which of your project's status options correspond to three workflow stages:
 
-| Role | Try matching (case-insensitive) |
-|------|-------------------------------|
-| `todo` | "Todo", "To Do", "To do", "Backlog", "New" |
-| `in-progress` | "In Progress", "In progress", "Working", "Active", "Doing" |
-| `done` | "Done", "Complete", "Completed", "Shipped", "Closed" |
+- **New issues** — set when creating an issue or resetting one that was started but not completed
+- **Started work** — set when you begin implementing an issue
+- **Finished work** — set when you close an issue after implementation is complete
 
-For each role:
+Using the status field's `.options` array from Step 4, auto-match option names to these stages:
+
+| Stage | Try matching (case-insensitive) |
+|-------|-------------------------------|
+| New issues | "Todo", "To Do", "To do", "Backlog", "New" |
+| Started work | "In Progress", "In progress", "Working", "Active", "Doing" |
+| Finished work | "Done", "Complete", "Completed", "Shipped", "Closed" |
+
+For each stage:
 - If exactly one option matches, auto-assign it.
 - If multiple options match, ask the user to pick.
 - If no options match, present the full list and ask the user to assign.
@@ -99,9 +105,9 @@ For each role:
 Present the proposed mapping for confirmation:
 ```
 Status mappings:
-  todo        → "Todo" (PVTO_xxx)
-  in-progress → "In Progress" (PVTO_yyy)
-  done        → "Done" (PVTO_zzz)
+  New issues    → "Todo"
+  Started work  → "In Progress"
+  Finished work → "Done"
 ```
 
 Ask: "Does this look right?"
