@@ -12,7 +12,7 @@ Start working on a GitHub issue: assign yourself, update project board dates and
 
 Follow the steps in [prompts/preflight.md](prompts/preflight.md).
 
-All script commands below use `<resolved-path>` to mean the absolute path found during preflight.
+All CLI commands below use `<cli>` to mean the invocation pattern established during preflight.
 
 ## Phase 1: Setup
 
@@ -24,7 +24,7 @@ Follow the steps in [prompts/setup.md](prompts/setup.md).
 
 2. Fetch the issue details:
    ```bash
-   <resolved-path> issue-view-full <number>
+   <cli> issue-view-full <number>
    ```
    Save the JSON output. Extract the issue `id` as `NODE_ID`, `title`, `body`, and `state`.
 
@@ -32,7 +32,7 @@ Follow the steps in [prompts/setup.md](prompts/setup.md).
 
 4. Check for a parent issue:
    ```bash
-   <resolved-path> get-parent "$NODE_ID"
+   <cli> get-parent "$NODE_ID"
    ```
    If the result is not `null`, save:
    - `PARENT_ID` from `.id`
@@ -45,12 +45,12 @@ Before making any changes, note the current status of the issue (and parent if a
 
 1. Assign the issue to yourself:
    ```bash
-   <resolved-path> issue-assign <number>
+   <cli> issue-assign <number>
    ```
 
 2. **If a parent issue exists** (detected in Phase 2, step 4), assign yourself to the parent issue:
    ```bash
-   <resolved-path> issue-assign <PARENT_NUMBER>
+   <cli> issue-assign <PARENT_NUMBER>
    ```
    This is idempotent — no error if already assigned.
 
@@ -58,30 +58,30 @@ Before making any changes, note the current status of the issue (and parent if a
 
    a. Check if the issue is already on the project board:
       ```bash
-      <resolved-path> get-project-item "$NODE_ID"
+      <cli> get-project-item "$NODE_ID"
       ```
       - If the output is **non-empty**, that value is `ITEM_ID`.
       - If the output is **empty**, add the issue to the project:
         ```bash
-        <resolved-path> add-to-project "$NODE_ID"
+        <cli> add-to-project "$NODE_ID"
         ```
         The output of `add-to-project` is `ITEM_ID`.
 
    b. Set the start date to today:
       ```bash
-      <resolved-path> set-date "$ITEM_ID" "$START_FIELD"
+      <cli> set-date "$ITEM_ID" "$START_FIELD"
       ```
 
    c. Set status to in-progress:
       ```bash
-      <resolved-path> set-status "$ITEM_ID" in-progress
+      <cli> set-status "$ITEM_ID" in-progress
       ```
 
 4. **If a parent issue exists AND a project is available:**
 
    a. Get the parent's start date:
       ```bash
-      <resolved-path> get-start-date "$PARENT_ID"
+      <cli> get-start-date "$PARENT_ID"
       ```
       Save `PARENT_ITEM` from `.item_id` and `PARENT_DATE` from `.date`.
 
@@ -90,10 +90,10 @@ Before making any changes, note the current status of the issue (and parent if a
       - **Only proceed if the user confirms.**
       - If confirmed:
         ```bash
-        <resolved-path> set-date "$PARENT_ITEM" "$START_FIELD"
+        <cli> set-date "$PARENT_ITEM" "$START_FIELD"
         ```
         ```bash
-        <resolved-path> set-status "$PARENT_ITEM" in-progress
+        <cli> set-status "$PARENT_ITEM" in-progress
         ```
 
 5. **Set up the workspace.**
@@ -161,12 +161,12 @@ When the user indicates they are done (or you have completed the implementation)
   - **Option B: Reset** — Restore the issue and parent (if touched) to their original state before this skill ran:
     - Reset the issue status:
       ```bash
-      <resolved-path> set-status "$ITEM_ID" todo
+      <cli> set-status "$ITEM_ID" todo
       ```
     - Note: there is no `clear-date` subcommand, so the start date cannot be removed. Resetting the status back to `todo` is the best approximation.
     - If the parent was touched, reset its status to whatever it was before Phase 3:
       ```bash
-      <resolved-path> set-status "$PARENT_ITEM" <original-status>
+      <cli> set-status "$PARENT_ITEM" <original-status>
       ```
 
 ## Important Notes

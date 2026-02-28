@@ -11,9 +11,13 @@ Create a new GitHub issue from conversation context and add it to the project bo
 
 Follow the steps in [prompts/preflight.md](prompts/preflight.md).
 
-All script commands below use `<resolved-path>` to mean the absolute path found during preflight.
+All CLI commands below use `<cli>` to mean the invocation pattern established during preflight.
 
-## Phase 1: Gather Context
+## Phase 1: Setup
+
+Follow the steps in [prompts/setup.md](prompts/setup.md).
+
+## Phase 2: Gather Context
 
 Read the conversation context and any arguments provided. You need:
 - **Title:** A clear, concise issue title
@@ -25,11 +29,11 @@ If the context is insufficient, ask the user for clarification.
 The default repository is the current git repository (auto-detected by the script). The user can specify a different repo.
 The default project is auto-detected from the repo owner's GitHub projects.
 
-## Phase 2: Create Issue
+## Phase 3: Create Issue
 
 1. Create the issue:
    ```bash
-   <resolved-path> issue-create --title "<title>" --body "<body>"
+   <cli> issue-create --title "<title>" --body "<body>"
    ```
 
    If the user specified a label, add `--label "<label>"`.
@@ -38,49 +42,49 @@ The default project is auto-detected from the repo owner's GitHub projects.
 
 2. Get the issue node ID:
    ```bash
-   <resolved-path> issue-view <number> --json id --jq '.id'
+   <cli> issue-view <number> --json id --jq '.id'
    ```
 
    Save the output as `NODE_ID`.
 
 3. Add to project:
    ```bash
-   <resolved-path> add-to-project "$NODE_ID"
+   <cli> add-to-project "$NODE_ID"
    ```
 
    Save the output as `ITEM_ID`.
 
 4. Set status to "Todo":
    ```bash
-   <resolved-path> set-status "$ITEM_ID" todo
+   <cli> set-status "$ITEM_ID" todo
    ```
 
-## Phase 2.5: Link Parent (conditional)
+## Phase 3.5: Link Parent (conditional)
 
-Skip this phase if no parent was specified in Phase 1.
+Skip this phase if no parent was specified in Phase 2.
 
 1. Resolve the parent issue's node ID:
    - Same-repo (`#N`):
      ```bash
-     <resolved-path> issue-view <N> --json id --jq '.id'
+     <cli> issue-view <N> --json id --jq '.id'
      ```
    - Cross-repo (full URL):
      ```bash
-     <resolved-path> issue-view <url> --json id --jq '.id'
+     <cli> issue-view <url> --json id --jq '.id'
      ```
 
    Save the output as `PARENT_NODE_ID`.
 
 2. Link the new issue as a sub-issue of the parent:
    ```bash
-   <resolved-path> set-parent "$NODE_ID" "$PARENT_NODE_ID"
+   <cli> set-parent "$NODE_ID" "$PARENT_NODE_ID"
    ```
 
-## Phase 3: Report
+## Phase 4: Report
 
 Tell the user the issue was created and provide the URL.
 
-If a parent was linked in Phase 2.5, also report: "Linked as sub-issue of #N (title)."
+If a parent was linked in Phase 3.5, also report: "Linked as sub-issue of #N (title)."
 
 ## Important Notes
 

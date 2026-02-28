@@ -18,7 +18,7 @@ When `REPO_OVERRIDE` is set (either from start-implementation handoff or parsed 
 
 Follow the steps in [prompts/preflight.md](prompts/preflight.md).
 
-All script commands below use `<resolved-path>` to mean the absolute path found during preflight.
+All CLI commands below use `<cli>` to mean the invocation pattern established during preflight.
 
 ## Phase 1: Setup (conditional)
 
@@ -36,7 +36,7 @@ Otherwise:
 
 2. Fetch the issue details:
    ```bash
-   <resolved-path> issue-view-full <number>
+   <cli> issue-view-full <number>
    ```
    Save the JSON output. Extract the issue `id` as `NODE_ID`.
 
@@ -44,13 +44,13 @@ Otherwise:
 
 4. **If a project is available**, get the project item ID:
    ```bash
-   <resolved-path> get-project-item "$NODE_ID"
+   <cli> get-project-item "$NODE_ID"
    ```
    Save the output as `ITEM_ID`.
 
 5. Check for a parent issue:
    ```bash
-   <resolved-path> get-parent "$NODE_ID"
+   <cli> get-parent "$NODE_ID"
    ```
    If the result is not `null`, save:
    - `PARENT_ID` from `.id`
@@ -87,30 +87,30 @@ This phase adds a closing comment summarizing what was implemented. The summary 
 
    a. Set the end date to today:
       ```bash
-      <resolved-path> set-date "$ITEM_ID" "$END_FIELD"
+      <cli> set-date "$ITEM_ID" "$END_FIELD"
       ```
 
    b. Set status to done:
       ```bash
-      <resolved-path> set-status "$ITEM_ID" done
+      <cli> set-status "$ITEM_ID" done
       ```
 
 2. Close the issue. If `SUMMARY` is non-empty (from Phase 2.5), write it to a temp file and include it as a closing comment:
    - Write the summary to `/tmp/issue-close-comment.md` using the Write tool
    - Then close:
      ```bash
-     <resolved-path> issue-close <number> --comment-file /tmp/issue-close-comment.md
+     <cli> issue-close <number> --comment-file /tmp/issue-close-comment.md
      ```
    If `SUMMARY` is empty, close without a comment:
    ```bash
-   <resolved-path> issue-close <number>
+   <cli> issue-close <number>
    ```
 
 3. **If a parent issue exists** (regardless of whether a project is available):
 
    a. Count open sub-issues on the parent:
       ```bash
-      <resolved-path> count-open-sub-issues "$PARENT_ID"
+      <cli> count-open-sub-issues "$PARENT_ID"
       ```
 
    b. If the count is **0** (all sub-issues are now resolved):
@@ -120,23 +120,23 @@ This phase adds a closing comment summarizing what was implemented. The summary 
 
         Get the parent's project item ID:
         ```bash
-        <resolved-path> get-project-item "$PARENT_ID"
+        <cli> get-project-item "$PARENT_ID"
         ```
         Save the output as `PARENT_ITEM`.
 
         Set the parent's end date to today:
         ```bash
-        <resolved-path> set-date "$PARENT_ITEM" "$END_FIELD"
+        <cli> set-date "$PARENT_ITEM" "$END_FIELD"
         ```
 
         Set the parent's status to done:
         ```bash
-        <resolved-path> set-status "$PARENT_ITEM" done
+        <cli> set-status "$PARENT_ITEM" done
         ```
 
       - If confirmed, close the parent issue (regardless of whether a project is available):
         ```bash
-        <resolved-path> issue-close <parent_number>
+        <cli> issue-close <parent_number>
         ```
 
       - If the user declines, leave the parent as-is.
