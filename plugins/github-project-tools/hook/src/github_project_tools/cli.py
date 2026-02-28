@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
+from datetime import UTC, datetime
 from pathlib import Path
 
-from github_project_tools.config import load_config
+from github_project_tools.config import GitHubProjectToolsConfig, load_config
 
 
 def run_gh(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
@@ -15,6 +17,19 @@ def run_gh(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str
         check=False,
         **kwargs,  # type: ignore[arg-type]
     )
+
+
+def graphql(
+    query: str,
+    variables: dict[str, str],
+    jq_filter: str | None = None,
+) -> subprocess.CompletedProcess[str]:
+    args = ["api", "graphql", "-f", f"query={query}"]
+    for key, value in variables.items():
+        args.extend(["-f", f"{key}={value}"])
+    if jq_filter:
+        args.extend(["--jq", jq_filter])
+    return run_gh(args)
 
 
 def detect_repo(repo_override: str | None) -> str:
@@ -32,6 +47,68 @@ def detect_repo(repo_override: str | None) -> str:
         print("detect_repo: no repository found", file=sys.stderr)
         sys.exit(1)
     return repo
+
+
+def parse_project_url(url: str) -> tuple[str, str]:
+    """Parse a project URL and return (owner, project_number).
+
+    Handles both user and org URLs:
+    - https://github.com/users/elahti/projects/1
+    - https://github.com/orgs/my-org/projects/42
+    """
+    match = re.match(r"https://github\.com/(?:users|orgs)/([^/]+)/projects/(\d+)", url)
+    if not match:
+        msg = f"Invalid project URL: {url}"
+        raise ValueError(msg)
+    return match.group(1), match.group(2)
+
+
+def load_config_or_fail(cwd: Path) -> GitHubProjectToolsConfig:
+    config = load_config(cwd)
+    if config is None:
+        print(
+            "No github-project-tools config found. Run the setup skill to create one.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    return config
+
+
+# Cache for project ID lookups
+_project_id_cache: dict[str, str] = {}
+
+
+def get_project_id(config: GitHubProjectToolsConfig) -> str:
+    """Get the GraphQL project ID by querying the project URL from config."""
+    if config.project in _project_id_cache:
+        return _project_id_cache[config.project]
+
+    owner, number = parse_project_url(config.project)
+    result = run_gh(
+        [
+            "project",
+            "view",
+            number,
+            "--owner",
+            owner,
+            "--format",
+            "json",
+            "--jq",
+            ".id",
+        ]
+    )
+    project_id = result.stdout.strip()
+    if not project_id or result.returncode != 0:
+        print(
+            f"get_project_id: failed to get project ID for {config.project}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    _project_id_cache[config.project] = project_id
+    return project_id
+
+
+# --- No-config commands ---
 
 
 def cmd_preflight() -> int:
@@ -63,6 +140,9 @@ def cmd_read_config(cwd: Path) -> int:
         return 1
     print(config.model_dump_json(by_alias=True))
     return 0
+
+
+# --- Issue subcommands ---
 
 
 def cmd_issue_view(repo: str, number: str, extra_args: list[str]) -> int:
@@ -204,7 +284,244 @@ def cmd_issue_assign(repo: str, number: str) -> int:
     return 0
 
 
+# --- Config-driven project board subcommands ---
+
+
+def cmd_get_project_item(config: GitHubProjectToolsConfig, node_id: str) -> int:
+    project_id = get_project_id(config)
+    result = graphql(
+        """
+        query($id: ID!) {
+          node(id: $id) {
+            ... on Issue {
+              projectItems(first: 10) { nodes { id project { id } } }
+            }
+          }
+        }""",
+        {"id": node_id},
+        jq_filter=(
+            f'.data.node.projectItems.nodes[] | select(.project.id == "{project_id}") | .id'
+        ),
+    )
+    if result.stdout:
+        print(result.stdout, end="")
+    return 0
+
+
+def cmd_get_start_date(config: GitHubProjectToolsConfig, node_id: str) -> int:
+    project_id = get_project_id(config)
+    result = graphql(
+        """
+        query($id: ID!) {
+          node(id: $id) {
+            ... on Issue {
+              projectItems(first: 10) {
+                nodes {
+                  id
+                  project { id }
+                  fieldValueByName(name: "Start date") {
+                    ... on ProjectV2ItemFieldDateValue { date }
+                  }
+                }
+              }
+            }
+          }
+        }""",
+        {"id": node_id},
+        jq_filter=(
+            f'.data.node.projectItems.nodes[] | select(.project.id == "{project_id}")'
+            " | {item_id: .id, date: (.fieldValueByName.date // null)}"
+        ),
+    )
+    if result.stdout:
+        print(result.stdout, end="")
+    return 0
+
+
+def cmd_add_to_project(config: GitHubProjectToolsConfig, node_id: str) -> int:
+    project_id = get_project_id(config)
+    result = graphql(
+        """
+        mutation($project: ID!, $content: ID!) {
+          addProjectV2ItemById(input: {projectId: $project, contentId: $content}) {
+            item { id }
+          }
+        }""",
+        {"project": project_id, "content": node_id},
+        jq_filter=".data.addProjectV2ItemById.item.id",
+    )
+    if result.stdout:
+        print(result.stdout, end="")
+    return 0
+
+
+def cmd_set_status(
+    config: GitHubProjectToolsConfig,
+    item_id: str,
+    status_key: str,
+) -> int:
+    status_map: dict[str, str] = {
+        "todo": config.fields.status.todo.option_id,
+        "in-progress": config.fields.status.in_progress.option_id,
+        "done": config.fields.status.done.option_id,
+    }
+    option_id = status_map.get(status_key)
+    if option_id is None:
+        valid = ", ".join(status_map)
+        print(
+            f"set-status: unknown status '{status_key}' (valid: {valid})",
+            file=sys.stderr,
+        )
+        return 1
+
+    project_id = get_project_id(config)
+    field_id = config.fields.status.id
+    graphql(
+        """
+        mutation($project: ID!, $item: ID!, $field: ID!, $value: String!) {
+          updateProjectV2ItemFieldValue(input: {
+            projectId: $project, itemId: $item,
+            fieldId: $field, value: {singleSelectOptionId: $value}
+          }) { projectV2Item { id } }
+        }""",
+        {
+            "project": project_id,
+            "item": item_id,
+            "field": field_id,
+            "value": option_id,
+        },
+    )
+    return 0
+
+
+def cmd_set_date(
+    config: GitHubProjectToolsConfig,
+    item_id: str,
+    field_id: str,
+) -> int:
+    project_id = get_project_id(config)
+    today = datetime.now(UTC).date().isoformat()
+    graphql(
+        """
+        mutation($project: ID!, $item: ID!, $field: ID!, $date: Date!) {
+          updateProjectV2ItemFieldValue(input: {
+            projectId: $project, itemId: $item,
+            fieldId: $field, value: {date: $date}
+          }) { projectV2Item { id } }
+        }""",
+        {
+            "project": project_id,
+            "item": item_id,
+            "field": field_id,
+            "date": today,
+        },
+    )
+    return 0
+
+
+# --- Repo-only subcommands ---
+
+
+def cmd_get_parent(node_id: str) -> int:
+    result = graphql(
+        """
+        query($id: ID!) {
+          node(id: $id) {
+            ... on Issue { parent { id number title state } }
+          }
+        }""",
+        {"id": node_id},
+        jq_filter=".data.node.parent",
+    )
+    if result.stdout:
+        print(result.stdout, end="")
+    return 0
+
+
+def cmd_count_open_sub_issues(node_id: str) -> int:
+    result = graphql(
+        """
+        query($id: ID!) {
+          node(id: $id) {
+            ... on Issue {
+              subIssues(first: 50) { nodes { state } }
+            }
+          }
+        }""",
+        {"id": node_id},
+        jq_filter='[.data.node.subIssues.nodes[] | select(.state == "OPEN")] | length',
+    )
+    if result.stdout:
+        print(result.stdout, end="")
+    return 0
+
+
+def cmd_set_parent(child_id: str, parent_id: str) -> int:
+    result = graphql(
+        """
+        mutation($parent: ID!, $child: ID!) {
+          addSubIssue(input: {issueId: $parent, subIssueId: $child}) {
+            subIssue { id }
+          }
+        }""",
+        {"parent": parent_id, "child": child_id},
+        jq_filter=".data.addSubIssue.subIssue.id",
+    )
+    if result.stdout:
+        print(result.stdout, end="")
+    return 0
+
+
+def cmd_table_set_status(
+    repo: str,
+    parent_number: str,
+    sub_number: str,
+    new_status: str,
+) -> int:
+    """Update the status column in an Action Plan markdown table."""
+    result = run_gh(
+        [
+            "issue",
+            "view",
+            parent_number,
+            "--repo",
+            repo,
+            "--json",
+            "body",
+            "--jq",
+            ".body",
+        ]
+    )
+    body = result.stdout
+
+    # Port the awk logic: match lines containing /issues/<sub_number>) or
+    # #<sub_number>), then replace the last | ... | with | <status> |
+    issue_pat = re.compile(
+        rf"(?:/issues/{re.escape(sub_number)}\)|#{re.escape(sub_number)}\))"
+    )
+    trailing_col = re.compile(r"\| [^|]* \|$")
+
+    lines = body.split("\n")
+    updated_lines: list[str] = []
+    for line in lines:
+        if issue_pat.search(line):
+            m = trailing_col.search(line)
+            if m:
+                line = line[: m.start()] + f"| {new_status} |"
+        updated_lines.append(line)
+
+    updated_body = "\n".join(updated_lines)
+    run_gh(["issue", "edit", parent_number, "--repo", repo, "--body", updated_body])
+    return 0
+
+
+# --- Main dispatch ---
+
+
 def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
+    # Clear project ID cache between invocations (for testability)
+    _project_id_cache.clear()
+
     args = argv if argv is not None else sys.argv[1:]
     working_dir = cwd if cwd is not None else Path.cwd()
 
@@ -256,6 +573,49 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
             return cmd_issue_close(resolved_repo, sub_args[0], sub_args[1:])
         if subcmd == "issue-assign":
             return cmd_issue_assign(resolved_repo, sub_args[0])
+
+    # Config-driven project board subcommands
+    config_cmds = {
+        "get-project-item",
+        "get-start-date",
+        "add-to-project",
+        "set-status",
+        "set-date",
+    }
+    if subcmd in config_cmds:
+        config = load_config_or_fail(working_dir)
+
+        if subcmd == "get-project-item":
+            return cmd_get_project_item(config, sub_args[0])
+        if subcmd == "get-start-date":
+            return cmd_get_start_date(config, sub_args[0])
+        if subcmd == "add-to-project":
+            return cmd_add_to_project(config, sub_args[0])
+        if subcmd == "set-status":
+            return cmd_set_status(config, sub_args[0], sub_args[1])
+        if subcmd == "set-date":
+            return cmd_set_date(config, sub_args[0], sub_args[1])
+
+    # Repo-only subcommands (no config needed)
+    repo_only_cmds = {
+        "get-parent",
+        "count-open-sub-issues",
+        "set-parent",
+        "table-set-status",
+    }
+    if subcmd in repo_only_cmds:
+        resolved_repo = detect_repo(repo)
+
+        if subcmd == "get-parent":
+            return cmd_get_parent(sub_args[0])
+        if subcmd == "count-open-sub-issues":
+            return cmd_count_open_sub_issues(sub_args[0])
+        if subcmd == "set-parent":
+            return cmd_set_parent(sub_args[0], sub_args[1])
+        if subcmd == "table-set-status":
+            return cmd_table_set_status(
+                resolved_repo, sub_args[0], sub_args[1], sub_args[2]
+            )
 
     print(f"Unknown subcommand: {subcmd}", file=sys.stderr)
     return 1

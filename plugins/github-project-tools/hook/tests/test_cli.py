@@ -452,3 +452,420 @@ class TestIssueClose:
         assert "comment" in comment_args
         assert "--body-file" in comment_args
         assert str(comment_file) in comment_args
+
+
+# --- Helper function tests ---
+
+
+class TestParseProjectUrl:
+    def test_users_url(self) -> None:
+        from github_project_tools.cli import parse_project_url
+
+        owner, number = parse_project_url("https://github.com/users/elahti/projects/1")
+        assert owner == "elahti"
+        assert number == "1"
+
+    def test_orgs_url(self) -> None:
+        from github_project_tools.cli import parse_project_url
+
+        owner, number = parse_project_url("https://github.com/orgs/my-org/projects/42")
+        assert owner == "my-org"
+        assert number == "42"
+
+    def test_invalid_url_raises(self) -> None:
+        from github_project_tools.cli import parse_project_url
+
+        with pytest.raises(ValueError, match="Invalid project URL"):
+            parse_project_url("https://github.com/elahti/repo")
+
+
+class TestLoadConfigOrFail:
+    def test_missing_config_exits(self, tmp_path: Path) -> None:
+        with pytest.raises(SystemExit, match="1"):
+            main(
+                ["--repo", "owner/repo", "set-status", "PVTI_item", "done"],
+                cwd=tmp_path,
+            )
+
+
+class TestGraphql:
+    def test_graphql_builds_correct_args(self) -> None:
+        from github_project_tools.cli import graphql
+
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="{}", stderr=""
+            )
+            graphql("query { viewer { login } }", {"id": "123"})
+        call_args = mock_run.call_args[0][0]
+        assert call_args[0] == "api"
+        assert call_args[1] == "graphql"
+        assert "-f" in call_args
+        assert "id=123" in call_args
+
+    def test_graphql_with_jq_filter(self) -> None:
+        from github_project_tools.cli import graphql
+
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="{}", stderr=""
+            )
+            graphql("query { viewer { login } }", {}, jq_filter=".data")
+        call_args = mock_run.call_args[0][0]
+        assert "--jq" in call_args
+        assert ".data" in call_args
+
+
+# --- Project board subcommand tests ---
+
+
+class TestSetStatus:
+    def test_uses_config_option_id(self, tmp_path: Path) -> None:
+        make_config(tmp_path)
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            # First call: get_project_id
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="PVT_proj\n", stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout='{"data":{}}', stderr=""
+                ),
+            ]
+            exit_code = main(
+                ["--repo", "owner/repo", "set-status", "PVTI_item", "done"],
+                cwd=tmp_path,
+            )
+        assert exit_code == 0
+        # Verify the option-id PVTO_3 (done) was used in the GraphQL call
+        graphql_call = mock_run.call_args_list[1]
+        call_str = " ".join(graphql_call[0][0])
+        assert "PVTO_3" in call_str
+
+    def test_uses_in_progress_option_id(self, tmp_path: Path) -> None:
+        make_config(tmp_path)
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="PVT_proj\n", stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout='{"data":{}}', stderr=""
+                ),
+            ]
+            exit_code = main(
+                ["--repo", "owner/repo", "set-status", "PVTI_item", "in-progress"],
+                cwd=tmp_path,
+            )
+        assert exit_code == 0
+        graphql_call = mock_run.call_args_list[1]
+        call_str = " ".join(graphql_call[0][0])
+        assert "PVTO_2" in call_str
+
+    def test_unknown_status_fails(self, tmp_path: Path) -> None:
+        make_config(tmp_path)
+        exit_code = main(
+            ["--repo", "owner/repo", "set-status", "PVTI_item", "invalid"],
+            cwd=tmp_path,
+        )
+        assert exit_code == 1
+
+    def test_uses_status_field_id(self, tmp_path: Path) -> None:
+        make_config(tmp_path)
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="PVT_proj\n", stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout='{"data":{}}', stderr=""
+                ),
+            ]
+            exit_code = main(
+                ["--repo", "owner/repo", "set-status", "PVTI_item", "todo"],
+                cwd=tmp_path,
+            )
+        assert exit_code == 0
+        graphql_call = mock_run.call_args_list[1]
+        call_str = " ".join(graphql_call[0][0])
+        assert "PVTF_status" in call_str
+
+
+class TestSetDate:
+    def test_sets_date_to_today(self, tmp_path: Path) -> None:
+        make_config(tmp_path)
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="PVT_proj\n", stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout='{"data":{}}', stderr=""
+                ),
+            ]
+            exit_code = main(
+                ["--repo", "owner/repo", "set-date", "PVTI_item", "PVTF_start"],
+                cwd=tmp_path,
+            )
+        assert exit_code == 0
+        # Verify a date in YYYY-MM-DD format was passed
+        graphql_call = mock_run.call_args_list[1]
+        call_str = " ".join(graphql_call[0][0])
+        import re
+
+        assert re.search(r"\d{4}-\d{2}-\d{2}", call_str)
+
+
+class TestGetProjectItem:
+    def test_returns_item_id(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        make_config(tmp_path)
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="PVT_proj\n", stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="PVTI_item123\n", stderr=""
+                ),
+            ]
+            exit_code = main(
+                ["--repo", "owner/repo", "get-project-item", "I_node"], cwd=tmp_path
+            )
+        assert exit_code == 0
+        out = capsys.readouterr().out
+        assert "PVTI_item123" in out
+
+    def test_uses_project_id_in_jq_filter(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        make_config(tmp_path)
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="PVT_proj\n", stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="PVTI_item\n", stderr=""
+                ),
+            ]
+            main(["--repo", "owner/repo", "get-project-item", "I_node"], cwd=tmp_path)
+        graphql_call = mock_run.call_args_list[1]
+        call_str = " ".join(graphql_call[0][0])
+        assert "PVT_proj" in call_str
+
+
+class TestGetStartDate:
+    def test_returns_start_date(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        make_config(tmp_path)
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="PVT_proj\n", stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[],
+                    returncode=0,
+                    stdout='{"item_id":"PVTI_x","date":"2024-01-15"}\n',
+                    stderr="",
+                ),
+            ]
+            exit_code = main(
+                ["--repo", "owner/repo", "get-start-date", "I_node"], cwd=tmp_path
+            )
+        assert exit_code == 0
+        out = capsys.readouterr().out
+        assert "PVTI_x" in out
+
+
+class TestAddToProject:
+    def test_returns_item_id(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        make_config(tmp_path)
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="PVT_proj\n", stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="PVTI_new\n", stderr=""
+                ),
+            ]
+            exit_code = main(
+                ["--repo", "owner/repo", "add-to-project", "I_node"], cwd=tmp_path
+            )
+        assert exit_code == 0
+        out = capsys.readouterr().out
+        assert "PVTI_new" in out
+
+    def test_passes_project_id_and_content_id(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        make_config(tmp_path)
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="PVT_proj\n", stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="PVTI_new\n", stderr=""
+                ),
+            ]
+            main(["--repo", "owner/repo", "add-to-project", "I_node"], cwd=tmp_path)
+        graphql_call = mock_run.call_args_list[1]
+        call_str = " ".join(graphql_call[0][0])
+        assert "project=PVT_proj" in call_str
+        assert "content=I_node" in call_str
+
+
+class TestGetParent:
+    def test_returns_parent(self, capsys: pytest.CaptureFixture[str]) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout='{"id":"I_parent","number":10,"title":"Parent","state":"OPEN"}\n',
+                stderr="",
+            )
+            exit_code = main(["--repo", "owner/repo", "get-parent", "I_child"])
+        assert exit_code == 0
+        out = capsys.readouterr().out
+        assert "I_parent" in out
+
+    def test_uses_jq_filter(self) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="{}\n", stderr=""
+            )
+            main(["--repo", "owner/repo", "get-parent", "I_child"])
+        call_args = mock_run.call_args[0][0]
+        assert "--jq" in call_args
+        assert ".data.node.parent" in call_args
+
+
+class TestCountOpenSubIssues:
+    def test_counts_open(self, capsys: pytest.CaptureFixture[str]) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="3\n", stderr=""
+            )
+            exit_code = main(
+                ["--repo", "owner/repo", "count-open-sub-issues", "I_parent"]
+            )
+        assert exit_code == 0
+        out = capsys.readouterr().out
+        assert "3" in out
+
+    def test_uses_correct_jq_filter(self) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="0\n", stderr=""
+            )
+            main(["--repo", "owner/repo", "count-open-sub-issues", "I_parent"])
+        call_args = mock_run.call_args[0][0]
+        assert "--jq" in call_args
+        jq_idx = call_args.index("--jq")
+        jq_filter = call_args[jq_idx + 1]
+        assert "OPEN" in jq_filter
+        assert "length" in jq_filter
+
+
+class TestSetParent:
+    def test_sets_parent(self) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="I_child\n", stderr=""
+            )
+            exit_code = main(
+                ["--repo", "owner/repo", "set-parent", "I_child", "I_parent"]
+            )
+        assert exit_code == 0
+
+    def test_passes_correct_variables(self) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="I_child\n", stderr=""
+            )
+            main(["--repo", "owner/repo", "set-parent", "I_child", "I_parent"])
+        call_args = mock_run.call_args[0][0]
+        call_str = " ".join(call_args)
+        assert "parent=I_parent" in call_str
+        assert "child=I_child" in call_str
+
+
+class TestTableSetStatus:
+    def test_updates_status_in_table(self) -> None:
+        body = (
+            "## Action Plan\n"
+            "| Task | Status |\n"
+            "| --- | --- |\n"
+            "| [Task 1](https://github.com/owner/repo/issues/5) | Todo |\n"
+            "| [Task 2](https://github.com/owner/repo/issues/6) | Todo |\n"
+        )
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                # issue view to get body
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout=body, stderr=""
+                ),
+                # issue edit to set body
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="", stderr=""
+                ),
+            ]
+            exit_code = main(
+                [
+                    "--repo",
+                    "owner/repo",
+                    "table-set-status",
+                    "1",
+                    "5",
+                    "In Progress",
+                ]
+            )
+        assert exit_code == 0
+        # Check the edited body contains updated status
+        edit_call = mock_run.call_args_list[1]
+        edit_args = edit_call[0][0]
+        body_idx = edit_args.index("--body")
+        updated_body = edit_args[body_idx + 1]
+        assert "In Progress" in updated_body
+        # Task 2 should be unchanged
+        assert "| Todo |" in updated_body
+
+    def test_updates_shorthand_reference(self) -> None:
+        body = (
+            "## Action Plan\n"
+            "| Task | Status |\n"
+            "| --- | --- |\n"
+            "| [Task 1](#5) | Todo |\n"
+        )
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout=body, stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="", stderr=""
+                ),
+            ]
+            exit_code = main(
+                [
+                    "--repo",
+                    "owner/repo",
+                    "table-set-status",
+                    "1",
+                    "5",
+                    "Done",
+                ]
+            )
+        assert exit_code == 0
+        edit_call = mock_run.call_args_list[1]
+        edit_args = edit_call[0][0]
+        body_idx = edit_args.index("--body")
+        updated_body = edit_args[body_idx + 1]
+        assert "Done" in updated_body
