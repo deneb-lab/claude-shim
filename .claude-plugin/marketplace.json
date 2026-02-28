@@ -12,7 +12,7 @@
       "name": "github-project-tools",
       "source": "./plugins/github-project-tools",
       "description": "GitHub issue creation and implementation with project board lifecycle management",
-      "version": "1.0.1",
+      "version": "2.0.0",
       "strict": true
     },
     {
