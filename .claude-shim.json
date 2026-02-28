@@ -30,5 +30,18 @@
       }
     ],
     "exclude": []
+  },
+  "github-project-tools": {
+    "project": "https://github.com/users/elahti/projects/1",
+    "fields": {
+      "start-date": "PVTF_lAHOAC8LI84BPPkbzg9teuk",
+      "end-date": "PVTF_lAHOAC8LI84BPPkbzg9teuo",
+      "status": {
+        "id": "PVTSSF_lAHOAC8LI84BPPkbzg9tWIc",
+        "todo": { "name": "Todo", "option-id": "f75ad846" },
+        "in-progress": { "name": "In Progress", "option-id": "47fc9ee4" },
+        "done": { "name": "Done", "option-id": "98236657" }
+      }
+    }
   }
 }
