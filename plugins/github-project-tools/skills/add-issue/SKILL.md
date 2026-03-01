@@ -1,6 +1,7 @@
 ---
 name: add-issue
 description: Create a GitHub issue from conversation context and add it to the project board with Todo status
+allowed-tools: Bash(*/github-project-tools/scripts/github-project-tools.sh preflight), Bash(*/github-project-tools/scripts/github-project-tools.sh read-config), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-create *), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-view *), Bash(*/github-project-tools/scripts/github-project-tools.sh add-to-project *), Bash(*/github-project-tools/scripts/github-project-tools.sh set-status *), Bash(*/github-project-tools/scripts/github-project-tools.sh set-parent *)
 ---
 
 # GitHub — Add Issue

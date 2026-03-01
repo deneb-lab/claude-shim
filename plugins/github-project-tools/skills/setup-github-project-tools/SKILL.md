@@ -1,6 +1,7 @@
 ---
 name: setup-github-project-tools
 description: Set up or modify github-project-tools configuration in .claude-shim.json for the current repository
+allowed-tools: Bash(*/github-project-tools/scripts/github-project-tools.sh preflight), Bash(*/github-project-tools/scripts/github-project-tools.sh read-config), Bash(gh repo view *), Bash(gh project *)
 ---
 
 # GitHub Projects — Setup

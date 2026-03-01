@@ -1,12 +1,12 @@
-1. Find the bundled hook project. Use Glob to locate it:
+1. Find the bundled CLI wrapper. Use Glob to locate it:
    ```
-   ~/.claude/plugins/**/github-project-tools/hook/pyproject.toml
+   ~/.claude/plugins/**/github-project-tools/scripts/github-project-tools.sh
    ```
-   Store the **parent directory** of the matched `pyproject.toml` as `HOOK_PATH`. For example, if the match is `/home/user/.claude/plugins/cache/claude-shim-marketplace/github-project-tools/1.1.0/hook/pyproject.toml`, then `HOOK_PATH` is `/home/user/.claude/plugins/cache/claude-shim-marketplace/github-project-tools/1.1.0/hook`.
+   Store the matched path as `CLI_PATH`. For example, if the match is `/home/user/.claude/plugins/cache/claude-shim-marketplace/github-project-tools/2.1.0/scripts/github-project-tools.sh`, then `CLI_PATH` is that full path.
 
 2. All commands for the rest of this skill use this invocation pattern:
    ```bash
-   uv run --project <HOOK_PATH> python -m github_project_tools <subcommand> [args...]
+   <CLI_PATH> <subcommand> [args...]
    ```
    Referred to as `<cli> <subcommand>` in the rest of this document.
 
