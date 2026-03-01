@@ -73,7 +73,7 @@ This phase adds a closing comment summarizing what was implemented. The summary 
    - <what was done, 3-7 bullets>
    ```
 
-   Each bullet should describe a concrete change (e.g., "Added `--comment` flag to `issue-close` subcommand in `github-projects.sh`"). Focus on what changed, not why.
+   Each bullet should describe a concrete change (e.g., "Added `--comment` flag to `issue-close` subcommand in `cli.py`"). Focus on what changed, not why.
 
 3. Present the summary to the user: "Here's the implementation summary that will be posted as a closing comment:" followed by the formatted summary.
 
