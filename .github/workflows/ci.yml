@@ -17,6 +17,9 @@ jobs:
         run: |
           find . -name '*.sh' -print0 | xargs -0 shellcheck
 
+      - name: Run hadolint
+        run: hadolint .github/images/ci/Dockerfile
+
       - name: Verify shared prompts are in sync
         run: |
           base=plugins/github-project-tools/skills

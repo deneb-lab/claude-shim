@@ -1,0 +1,2 @@
+ignored:
+  - DL3008 # apt packages intentionally unpinned (no Renovate support for apt versions)

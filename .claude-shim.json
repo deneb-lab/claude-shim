@@ -27,6 +27,12 @@
         "commands": [
           "jq ."
         ]
+      },
+      {
+        "pattern": "**/Dockerfile",
+        "commands": [
+          "hadolint"
+        ]
       }
     ],
     "exclude": []
