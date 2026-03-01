@@ -1,4 +1,4 @@
-- **CLI invocation:** The `<cli>` prefix (see preflight) MUST be the literal first tokens of every bash command — e.g. `<cli> issue-assign 14`. NEVER split the path into a variable. Claude Code matches permissions by the first token; variable-wrapped paths produce a different fingerprint every time, forcing repeated approval prompts.
+- **CLI invocation:** The `<cli>` prefix (see preflight) MUST be the literal resolved path to `github-project-tools.sh` as the first token of every bash command — e.g. `<cli> issue-assign 14`. NEVER split the path into a variable. Claude Code matches permissions by the first token; variable-wrapped paths produce a different fingerprint every time, forcing repeated approval prompts.
 - **No command substitution** in bash commands — never use `$(...)`. If logic is needed, add it to the CLI. Use `--body-file` for multi-line content (write to a temp file with the Write tool first).
 - **JSON processing:** Extract values from command output in-context. Do not use separate `echo | jq` bash commands.
 - **All GitHub operations** go through `<cli>` — never call `gh` directly.
