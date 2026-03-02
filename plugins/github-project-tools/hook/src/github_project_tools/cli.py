@@ -242,9 +242,6 @@ def cmd_issue_create(repo: str, args: list[str]) -> int:
         elif args[i] == "--body":
             body = args[i + 1]
             i += 2
-        elif args[i] == "--body-file":
-            body = Path(args[i + 1]).read_text()
-            i += 2
         elif args[i] == "--label":
             label = args[i + 1]
             i += 2
