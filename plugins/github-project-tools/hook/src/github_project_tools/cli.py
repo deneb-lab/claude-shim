@@ -270,9 +270,6 @@ def cmd_issue_edit(repo: str, number: str, args: list[str]) -> int:
         if args[i] == "--body":
             body = args[i + 1]
             i += 2
-        elif args[i] == "--body-file":
-            body = Path(args[i + 1]).read_text()
-            i += 2
         else:
             print(f"issue-edit: unknown arg: {args[i]}", file=sys.stderr)
             return 1

@@ -236,30 +236,6 @@ class TestIssueEdit:
         assert "--body" in call_args
         assert "Updated body" in call_args
 
-    def test_edit_with_body_file(
-        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
-    ) -> None:
-        body_file = tmp_path / "body.md"
-        body_file.write_text("File body content")
-        with patch("github_project_tools.cli.run_gh") as mock_run:
-            mock_run.return_value = subprocess.CompletedProcess(
-                args=[], returncode=0, stdout="", stderr=""
-            )
-            exit_code = main(
-                [
-                    "--repo",
-                    "owner/repo",
-                    "issue-edit",
-                    "42",
-                    "--body-file",
-                    str(body_file),
-                ]
-            )
-        assert exit_code == 0
-        call_args = mock_run.call_args[0][0]
-        assert "--body" in call_args
-        assert "File body content" in call_args
-
     def test_edit_missing_body_exits_1(
         self, capsys: pytest.CaptureFixture[str]
     ) -> None:
