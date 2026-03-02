@@ -869,3 +869,120 @@ class TestTableSetStatus:
         body_idx = edit_args.index("--body")
         updated_body = edit_args[body_idx + 1]
         assert "Done" in updated_body
+
+
+# --- Discovery subcommand tests (setup skill) ---
+
+
+class TestRepoDetect:
+    def test_auto_detect_prints_repo(self, capsys: pytest.CaptureFixture[str]) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="owner/repo\n", stderr=""
+            )
+            exit_code = main(["repo-detect"])
+        assert exit_code == 0
+        assert capsys.readouterr().out.strip() == "owner/repo"
+
+    def test_repo_override(self, capsys: pytest.CaptureFixture[str]) -> None:
+        with patch("github_project_tools.cli.run_gh"):
+            exit_code = main(["--repo", "other/repo", "repo-detect"])
+        assert exit_code == 0
+        assert capsys.readouterr().out.strip() == "other/repo"
+
+    def test_auto_detect_fails_exits_1(self) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=1, stdout="", stderr="not a git repo"
+            )
+            with pytest.raises(SystemExit, match="1"):
+                main(["repo-detect"])
+
+
+class TestProjectList:
+    def test_passes_owner_and_format(self, capsys: pytest.CaptureFixture[str]) -> None:
+        json_output = '{"projects":[{"number":1,"title":"My Project"}]}'
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout=json_output, stderr=""
+            )
+            exit_code = main(["project-list", "--owner", "elahti"])
+        assert exit_code == 0
+        call_args = mock_run.call_args[0][0]
+        assert "project" in call_args
+        assert "list" in call_args
+        assert "--owner" in call_args
+        assert "elahti" in call_args
+        assert "--format" in call_args
+        assert "json" in call_args
+        assert json_output in capsys.readouterr().out
+
+    def test_missing_owner_exits_1(self, capsys: pytest.CaptureFixture[str]) -> None:
+        exit_code = main(["project-list"])
+        assert exit_code == 1
+        assert "owner" in capsys.readouterr().err.lower()
+
+
+class TestProjectFieldList:
+    def test_passes_owner_number_and_format(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        json_output = (
+            '{"fields":[{"name":"Status","id":"PVTF_1","type":"SINGLE_SELECT"}]}'
+        )
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout=json_output, stderr=""
+            )
+            exit_code = main(["project-field-list", "--owner", "elahti", "1"])
+        assert exit_code == 0
+        call_args = mock_run.call_args[0][0]
+        assert "project" in call_args
+        assert "field-list" in call_args
+        assert "1" in call_args
+        assert "--owner" in call_args
+        assert "elahti" in call_args
+        assert "--format" in call_args
+        assert "json" in call_args
+        assert json_output in capsys.readouterr().out
+
+    def test_missing_owner_exits_1(self, capsys: pytest.CaptureFixture[str]) -> None:
+        exit_code = main(["project-field-list", "1"])
+        assert exit_code == 1
+        assert "owner" in capsys.readouterr().err.lower()
+
+    def test_missing_number_exits_1(self, capsys: pytest.CaptureFixture[str]) -> None:
+        exit_code = main(["project-field-list", "--owner", "elahti"])
+        assert exit_code == 1
+        assert "number" in capsys.readouterr().err.lower()
+
+
+class TestIssueList:
+    def test_passthrough_args(self, capsys: pytest.CaptureFixture[str]) -> None:
+        json_output = '[{"number":1,"projectItems":[]}]'
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout=json_output, stderr=""
+            )
+            exit_code = main(
+                [
+                    "--repo",
+                    "owner/repo",
+                    "issue-list",
+                    "--limit",
+                    "5",
+                    "--json",
+                    "number,projectItems",
+                ]
+            )
+        assert exit_code == 0
+        call_args = mock_run.call_args[0][0]
+        assert "issue" in call_args
+        assert "list" in call_args
+        assert "--repo" in call_args
+        assert "owner/repo" in call_args
+        assert "--limit" in call_args
+        assert "5" in call_args
+        assert "--json" in call_args
+        assert "number,projectItems" in call_args
+        assert json_output in capsys.readouterr().out

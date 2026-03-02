@@ -1,7 +1,7 @@
 ---
 name: setup-github-project-tools
 description: Set up or modify github-project-tools configuration in .claude-shim.json for the current repository
-allowed-tools: Bash(*/github-project-tools/scripts/github-project-tools.sh preflight), Bash(*/github-project-tools/scripts/github-project-tools.sh read-config), Bash(gh repo view *), Bash(gh project *)
+allowed-tools: Bash(*/github-project-tools/scripts/github-project-tools.sh *)
 ---
 
 # GitHub Projects — Setup
@@ -31,10 +31,10 @@ Run:
 
 Auto-detect the repository:
 ```bash
-gh repo view --json nameWithOwner -q .nameWithOwner
+<cli> repo-detect
 ```
 
-Save as `REPO` (e.g., `owner/repo`). Extract `OWNER` as the part before `/`.
+Save the output as `REPO` (e.g., `owner/repo`). Extract `OWNER` as the part before `/`.
 
 Confirm with the user: "Detected repository: `REPO`. Issues will be created and managed in this repository. Correct?"
 
@@ -42,7 +42,7 @@ Confirm with the user: "Detected repository: `REPO`. Issues will be created and 
 
 List the owner's projects:
 ```bash
-gh project list --owner "$OWNER" --format json
+<cli> project-list --owner "$OWNER"
 ```
 
 Parse the JSON output. The `.projects` array contains objects with `number`, `title`, `id`, and `url`.
@@ -53,7 +53,7 @@ Parse the JSON output. The `.projects` array contains objects with `number`, `ti
 
 - **If multiple projects:** Try to auto-detect which project is used by this repo:
   ```bash
-  gh issue list --repo "$REPO" --limit 5 --json number,projectItems
+  <cli> issue-list --limit 5 --json number,projectItems
   ```
   Check if any returned issues have `projectItems` linking to one of the listed projects. If a match is found, recommend that project.
 
@@ -65,7 +65,7 @@ Save `PROJECT_URL`, `PROJECT_NUMBER`, and `PROJECT_ID` from the selected project
 
 Get the project's fields:
 ```bash
-gh project field-list "$PROJECT_NUMBER" --owner "$OWNER" --format json
+<cli> project-field-list --owner "$OWNER" "$PROJECT_NUMBER"
 ```
 
 Parse the JSON output. The `.fields` array contains objects with `name`, `id`, and `type`.

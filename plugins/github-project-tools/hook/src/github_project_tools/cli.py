@@ -142,6 +142,67 @@ def cmd_read_config(cwd: Path) -> int:
     return 0
 
 
+def cmd_repo_detect(repo_override: str | None) -> int:
+    repo = detect_repo(repo_override)
+    print(repo)
+    return 0
+
+
+def cmd_project_list(args: list[str]) -> int:
+    owner = ""
+    i = 0
+    while i < len(args):
+        if args[i] == "--owner":
+            if i + 1 >= len(args):
+                print("project-list: --owner requires an argument", file=sys.stderr)
+                return 1
+            owner = args[i + 1]
+            i += 2
+        else:
+            print(f"project-list: unknown arg: {args[i]}", file=sys.stderr)
+            return 1
+    if not owner:
+        print("project-list: --owner required", file=sys.stderr)
+        return 1
+    result = run_gh(["project", "list", "--owner", owner, "--format", "json"])
+    if result.stdout:
+        print(result.stdout, end="")
+    return 0
+
+
+def cmd_project_field_list(args: list[str]) -> int:
+    owner = ""
+    number = ""
+    i = 0
+    while i < len(args):
+        if args[i] == "--owner":
+            if i + 1 >= len(args):
+                print(
+                    "project-field-list: --owner requires an argument", file=sys.stderr
+                )
+                return 1
+            owner = args[i + 1]
+            i += 2
+        elif not args[i].startswith("--"):
+            number = args[i]
+            i += 1
+        else:
+            print(f"project-field-list: unknown arg: {args[i]}", file=sys.stderr)
+            return 1
+    if not owner:
+        print("project-field-list: --owner required", file=sys.stderr)
+        return 1
+    if not number:
+        print("project-field-list: project number required", file=sys.stderr)
+        return 1
+    result = run_gh(
+        ["project", "field-list", number, "--owner", owner, "--format", "json"]
+    )
+    if result.stdout:
+        print(result.stdout, end="")
+    return 0
+
+
 # --- Issue subcommands ---
 
 
@@ -279,6 +340,13 @@ def cmd_issue_close(repo: str, number: str, args: list[str]) -> int:
 
 def cmd_issue_assign(repo: str, number: str) -> int:
     result = run_gh(["issue", "edit", number, "--repo", repo, "--add-assignee", "@me"])
+    if result.stdout:
+        print(result.stdout, end="")
+    return 0
+
+
+def cmd_issue_list(repo: str, extra_args: list[str]) -> int:
+    result = run_gh(["issue", "list", "--repo", repo, *extra_args])
     if result.stdout:
         print(result.stdout, end="")
     return 0
@@ -548,6 +616,12 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
         return cmd_preflight()
     if subcmd == "read-config":
         return cmd_read_config(working_dir)
+    if subcmd == "repo-detect":
+        return cmd_repo_detect(repo)
+    if subcmd == "project-list":
+        return cmd_project_list(sub_args)
+    if subcmd == "project-field-list":
+        return cmd_project_field_list(sub_args)
 
     # Issue subcommands require repo detection
     issue_cmds = {
@@ -557,6 +631,7 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
         "issue-edit",
         "issue-close",
         "issue-assign",
+        "issue-list",
     }
     if subcmd in issue_cmds:
         resolved_repo = detect_repo(repo)
@@ -573,6 +648,8 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
             return cmd_issue_close(resolved_repo, sub_args[0], sub_args[1:])
         if subcmd == "issue-assign":
             return cmd_issue_assign(resolved_repo, sub_args[0])
+        if subcmd == "issue-list":
+            return cmd_issue_list(resolved_repo, sub_args)
 
     # Config-driven project board subcommands
     config_cmds = {
