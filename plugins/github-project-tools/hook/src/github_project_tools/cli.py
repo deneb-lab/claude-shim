@@ -284,22 +284,14 @@ def cmd_issue_edit(repo: str, number: str, args: list[str]) -> int:
 
 def cmd_issue_close(repo: str, number: str, args: list[str]) -> int:
     comment = ""
-    comment_file = ""
     i = 0
     while i < len(args):
         if args[i] == "--comment":
             comment = args[i + 1]
             i += 2
-        elif args[i] == "--comment-file":
-            comment_file = args[i + 1]
-            i += 2
         else:
             print(f"issue-close: unknown arg: {args[i]}", file=sys.stderr)
             return 1
-
-    # --comment-file overrides --comment
-    if comment_file:
-        comment = Path(comment_file).read_text()
 
     # Check current issue state
     state_result = run_gh(
@@ -315,20 +307,7 @@ def cmd_issue_close(repo: str, number: str, args: list[str]) -> int:
     else:
         print(f"Issue #{number} is already closed — skipping close.", file=sys.stderr)
         if comment:
-            if comment_file:
-                run_gh(
-                    [
-                        "issue",
-                        "comment",
-                        number,
-                        "--repo",
-                        repo,
-                        "--body-file",
-                        comment_file,
-                    ]
-                )
-            else:
-                run_gh(["issue", "comment", number, "--repo", repo, "--body", comment])
+            run_gh(["issue", "comment", number, "--repo", repo, "--body", comment])
     return 0
 
 
