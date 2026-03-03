@@ -123,6 +123,7 @@ Build the configuration object:
 ```json
 {
   "github-project-tools": {
+    "repo": "<REPO>",
     "project": "<PROJECT_URL>",
     "fields": {
       "start-date": "<START_FIELD_ID>",
