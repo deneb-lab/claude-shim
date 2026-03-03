@@ -106,7 +106,7 @@ Show the user the proposed `.claude-shim.json` as formatted JSON. For each entry
 - The detected package runner (if applicable)
 - Any non-root config paths detected
 
-Ask the user to confirm, or tell you what to change. Iterate until they're satisfied.
+Present the proposed config to the user and ask what they want to change. Iterate until they're satisfied.
 
 The user may:
 - Remove entries for languages they don't want checked
