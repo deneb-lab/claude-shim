@@ -107,3 +107,58 @@ class TestGitHubProjectToolsConfig:
         result = load_config(tmp_path)
         assert result is not None
         assert result.project == "https://github.com/users/testowner/projects/1"
+
+    def test_config_with_repo(self, tmp_path: Path) -> None:
+        config_data = {
+            "github-project-tools": {
+                "repo": "owner/my-repo",
+                "project": "https://github.com/users/testowner/projects/1",
+                "fields": {
+                    "start-date": "PVTF_start",
+                    "end-date": "PVTF_end",
+                    "status": {
+                        "id": "PVTF_status",
+                        "todo": {"name": "Todo", "option-id": "PVTO_1"},
+                        "in-progress": {
+                            "name": "In Progress",
+                            "option-id": "PVTO_2",
+                        },
+                        "done": {"name": "Done", "option-id": "PVTO_3"},
+                    },
+                },
+            }
+        }
+        config_file = tmp_path / ".claude-shim.json"
+        config_file.write_text(json.dumps(config_data))
+
+        result = load_config(tmp_path)
+
+        assert result is not None
+        assert result.repo == "owner/my-repo"
+
+    def test_config_without_repo_returns_none_repo(self, tmp_path: Path) -> None:
+        config_data = {
+            "github-project-tools": {
+                "project": "https://github.com/users/testowner/projects/1",
+                "fields": {
+                    "start-date": "PVTF_start",
+                    "end-date": "PVTF_end",
+                    "status": {
+                        "id": "PVTF_status",
+                        "todo": {"name": "Todo", "option-id": "PVTO_1"},
+                        "in-progress": {
+                            "name": "In Progress",
+                            "option-id": "PVTO_2",
+                        },
+                        "done": {"name": "Done", "option-id": "PVTO_3"},
+                    },
+                },
+            }
+        }
+        config_file = tmp_path / ".claude-shim.json"
+        config_file.write_text(json.dumps(config_data))
+
+        result = load_config(tmp_path)
+
+        assert result is not None
+        assert result.repo is None

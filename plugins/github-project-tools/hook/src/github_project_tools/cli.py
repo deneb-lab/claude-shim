@@ -647,8 +647,6 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
         "set-parent",
     }
     if subcmd in repo_only_cmds:
-        resolved_repo = detect_repo(repo)
-
         if subcmd == "get-parent":
             return cmd_get_parent(sub_args[0])
         if subcmd == "count-open-sub-issues":

@@ -28,6 +28,7 @@ class ProjectFields(BaseModel):
 
 
 class GitHubProjectToolsConfig(BaseModel):
+    repo: str | None = None
     project: str
     fields: ProjectFields
 

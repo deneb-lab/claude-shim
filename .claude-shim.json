@@ -37,6 +37,7 @@
     "exclude": []
   },
   "github-project-tools": {
+    "repo": "elahti/claude-shim",
     "project": "https://github.com/users/elahti/projects/1",
     "fields": {
       "start-date": "PVTF_lAHOAC8LI84BPPkbzg9teuk",
