@@ -130,7 +130,6 @@ Write the final `.claude-shim.json` to the repository root:
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/elahti/claude-shim/main/plugins/quality-check-hook/claude-shim.schema.json",
   "quality-checks": {
     "include": [
       ...

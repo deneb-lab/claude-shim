@@ -81,18 +81,3 @@ class TestClaudeShimConfig:
         assert result is not None
         assert len(result.quality_checks.include) == 2
         assert result.quality_checks.include[1].commands == ["cmd2", "cmd3"]
-
-    def test_schema_key_ignored(self, tmp_path: Path) -> None:
-        config_data = {
-            "$schema": "https://raw.githubusercontent.com/elahti/claude-shim/main/plugins/quality-check-hook/claude-shim.schema.json",
-            "quality-checks": {
-                "include": [{"pattern": "**/*.py", "commands": ["ruff check"]}]
-            },
-        }
-        config_file = tmp_path / ".claude-shim.json"
-        config_file.write_text(json.dumps(config_data))
-
-        result = load_config(tmp_path)
-
-        assert result is not None
-        assert len(result.quality_checks.include) == 1

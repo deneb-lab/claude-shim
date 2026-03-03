@@ -83,7 +83,6 @@ class TestGitHubProjectToolsConfig:
 
     def test_extra_keys_ignored(self, tmp_path: Path) -> None:
         config_data: dict[str, object] = {
-            "$schema": "https://example.com/schema.json",
             "quality-checks": {"include": []},
             "github-project-tools": {
                 "project": "https://github.com/users/testowner/projects/1",

@@ -35,7 +35,6 @@ In the example below editing `src/app.ts` runs all three commands: `prettier --w
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/elahti/claude-shim/main/plugins/quality-check-hook/claude-shim.schema.json",
   "quality-checks": {
     "include": [
       {
