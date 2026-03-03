@@ -1,5 +1,4 @@
 {
-  "$schema": "https://raw.githubusercontent.com/elahti/claude-shim/main/plugins/quality-check-hook/claude-shim.schema.json",
   "quality-checks": {
     "include": [
       {
