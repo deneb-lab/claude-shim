@@ -9,4 +9,4 @@ Extract the issue number from whichever format is provided.
 <resolved-path> --repo owner/repo issue-view-full 42
 ```
 
-If only a plain issue number was provided, do not use `--repo` — the script will auto-detect the repository from the git remote.
+If only a plain issue number was provided, keep the existing `REPO_OVERRIDE` from setup (if set). The URL-derived repo takes precedence over the config repo, which takes precedence over auto-detection.
