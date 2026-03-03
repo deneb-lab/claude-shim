@@ -36,7 +36,9 @@ Auto-detect the repository:
 
 Save the output as `REPO` (e.g., `owner/repo`). Extract `OWNER` as the part before `/`.
 
-Confirm with the user: "Detected repository: `REPO`. Issues will be created and managed in this repository. Correct?"
+Use AskUserQuestion to confirm with the user: "Detected repository: `REPO`. Issues will be created and managed in this repository."
+- **Yes, use this repository** — proceed to Step 3.
+- **No, let me specify** — ask the user for the correct `owner/repo` value, save it as `REPO`, re-extract `OWNER`, and proceed to Step 3.
 
 ## Step 3: Detect Project
 
