@@ -48,13 +48,7 @@ Before making any changes, note the current status of the issue (and parent if a
    <cli> issue-assign <number>
    ```
 
-2. **If a parent issue exists** (detected in Phase 2, step 4), assign yourself to the parent issue:
-   ```bash
-   <cli> issue-assign <PARENT_NUMBER>
-   ```
-   This is idempotent — no error if already assigned.
-
-3. **If a project is available:**
+2. **If a project is available:**
 
    a. Check if the issue is already on the project board:
       ```bash
@@ -77,24 +71,39 @@ Before making any changes, note the current status of the issue (and parent if a
       <cli> set-status "$ITEM_ID" in-progress
       ```
 
-4. **If a parent issue exists AND a project is available:**
+3. **If a parent issue exists AND a project is available:**
 
-   a. Get the parent's start date:
+   a. Check if the parent is on the project board:
       ```bash
       <cli> get-start-date "$PARENT_ID"
       ```
-      Save `PARENT_ITEM` from `.item_id` and `PARENT_DATE` from `.date`.
+      - If the output is **non-empty**: extract `PARENT_ITEM` from `.item_id` and `PARENT_DATE` from `.date`. Proceed to (b).
+      - If the output is **empty**: the parent is not on the project board. **Ask the user:**
+        "Parent #PARENT_NUMBER (PARENT_TITLE) is not on the project board. Add it? (Start date and status can only be set for issues on the board.)"
+        - If the user confirms:
+          ```bash
+          <cli> add-to-project "$PARENT_ID"
+          ```
+          The output is `PARENT_ITEM`. `PARENT_DATE` is implicitly `"null"`. Proceed to (b).
+        - If the user declines: **skip all remaining parent project operations** (date, status). Jump to step 4.
 
-   b. If `PARENT_DATE` is `"null"` (the parent has no start date set):
-      - **Ask the user:** "Parent #PARENT_NUMBER (PARENT_TITLE) has no start date. Set start date to today and status to in-progress?"
-      - **Only proceed if the user confirms.**
-      - If confirmed:
-        ```bash
-        <cli> set-date "$PARENT_ITEM" "$START_FIELD"
-        ```
-        ```bash
-        <cli> set-status "$PARENT_ITEM" in-progress
-        ```
+   b. If `PARENT_DATE` is `"null"` (the parent has no start date set), set it to today:
+      ```bash
+      <cli> set-date "$PARENT_ITEM" "$START_FIELD"
+      ```
+
+   c. Set parent status to in-progress (idempotent — safe even if already in-progress):
+      ```bash
+      <cli> set-status "$PARENT_ITEM" in-progress
+      ```
+
+4. **If a parent issue exists** (regardless of project board status), ask the user about assignment:
+   - **Ask the user:** "Assign yourself to parent #PARENT_NUMBER (PARENT_TITLE)?"
+   - **Only proceed if the user confirms.**
+   - If confirmed:
+     ```bash
+     <cli> issue-assign <PARENT_NUMBER>
+     ```
 
 5. **Set up the workspace.**
 
