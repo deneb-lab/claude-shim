@@ -1,7 +1,7 @@
 ---
 name: start-implementation
 description: Start implementing a GitHub issue - assigns, sets dates/status, and presents issue context
-allowed-tools: Bash(*/github-project-tools/scripts/github-project-tools.sh preflight), Bash(*/github-project-tools/scripts/github-project-tools.sh read-config), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-view-full *), Bash(*/github-project-tools/scripts/github-project-tools.sh get-parent *), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-assign *), Bash(*/github-project-tools/scripts/github-project-tools.sh get-project-item *), Bash(*/github-project-tools/scripts/github-project-tools.sh add-to-project *), Bash(*/github-project-tools/scripts/github-project-tools.sh set-date *), Bash(*/github-project-tools/scripts/github-project-tools.sh set-status *), Bash(*/github-project-tools/scripts/github-project-tools.sh get-start-date *), Bash(git rev-parse *), Bash(git checkout *), Bash(git worktree *)
+allowed-tools: Bash(*/github-project-tools/scripts/github-project-tools.sh preflight), Bash(*/github-project-tools/scripts/github-project-tools.sh read-config), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-view-full *), Bash(*/github-project-tools/scripts/github-project-tools.sh get-parent *), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-assign *), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-get-assignees *), Bash(*/github-project-tools/scripts/github-project-tools.sh get-project-item *), Bash(*/github-project-tools/scripts/github-project-tools.sh add-to-project *), Bash(*/github-project-tools/scripts/github-project-tools.sh set-date *), Bash(*/github-project-tools/scripts/github-project-tools.sh set-status *), Bash(*/github-project-tools/scripts/github-project-tools.sh get-start-date *), Bash(git rev-parse *), Bash(git checkout *), Bash(git worktree *)
 ---
 
 # GitHub Projects — Start Implementation
@@ -43,25 +43,29 @@ Follow the steps in [prompts/setup.md](prompts/setup.md).
 
 Before making any changes, note the current status of the issue (and parent if applicable) so it can be restored if needed in Phase 5.
 
-1. Assign the issue to yourself:
+1. Check if already assigned to the issue:
+   ```bash
+   <cli> issue-get-assignees <number>
+   ```
+   Check if the current user's login is in the returned JSON array. If already assigned, skip to step 2. Otherwise, assign:
    ```bash
    <cli> issue-assign <number>
    ```
 
 2. **If a project is available:**
 
-   a. Check if the issue is already on the project board:
+   a. Check if the issue is on the project board and whether a start date is already set:
       ```bash
-      <cli> get-project-item "$NODE_ID"
+      <cli> get-start-date "$NODE_ID"
       ```
-      - If the output is **non-empty**, that value is `ITEM_ID`.
-      - If the output is **empty**, add the issue to the project:
+      - If the output is **non-empty**: extract `ITEM_ID` from `.item_id` and `ISSUE_DATE` from `.date`. Proceed to (b).
+      - If the output is **empty**: the issue is not on the project board. Add it:
         ```bash
         <cli> add-to-project "$NODE_ID"
         ```
-        The output of `add-to-project` is `ITEM_ID`.
+        The output is `ITEM_ID`. `ISSUE_DATE` is implicitly `"null"`. Proceed to (b).
 
-   b. Set the start date to today:
+   b. If `ISSUE_DATE` is `"null"` (no start date set), set it to today:
       ```bash
       <cli> set-date "$ITEM_ID" "$START_FIELD"
       ```
@@ -97,8 +101,12 @@ Before making any changes, note the current status of the issue (and parent if a
       <cli> set-status "$PARENT_ITEM" in-progress
       ```
 
-4. **If a parent issue exists** (regardless of project board status), ask the user about assignment:
-   - **Ask the user:** "Assign yourself to parent #PARENT_NUMBER (PARENT_TITLE)?"
+4. **If a parent issue exists** (regardless of project board status), check parent assignment:
+   ```bash
+   <cli> issue-get-assignees <PARENT_NUMBER>
+   ```
+   - If the current user is already in the assignees list, skip.
+   - If the current user is **not** in the assignees list, **ask the user:** "Assign yourself to parent #PARENT_NUMBER (PARENT_TITLE)?"
    - **Only proceed if the user confirms.**
    - If confirmed:
      ```bash
