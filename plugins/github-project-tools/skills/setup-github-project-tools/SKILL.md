@@ -51,7 +51,9 @@ Parse the JSON output. The `.projects` array contains objects with `number`, `ti
 
 - **If no projects found:** Tell the user "No GitHub Projects found for owner `OWNER`. Create a project first, then re-run this setup." Stop.
 
-- **If exactly one project:** Auto-select it. Tell the user: "Found project: `title` (`url`). Using this project." Ask for confirmation.
+- **If exactly one project:** Use AskUserQuestion to confirm: "Found one project: `title` (`url`)."
+  - **Yes, use this project** — proceed.
+  - **No** — tell the user "No other projects found for owner `OWNER`. Create another project first, then re-run this setup." Stop.
 
 - **If multiple projects:** Try to auto-detect which project is used by this repo:
   ```bash
