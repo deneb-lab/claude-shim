@@ -138,7 +138,13 @@ Build the configuration object:
 }
 ```
 
-Present the final config JSON to the user for confirmation.
+Present the final config JSON to the user.
+
+<HARD-GATE>
+Do NOT write `.claude-shim.json` until the user has explicitly approved. Use AskUserQuestion:
+- **Approve and write** — proceed to write the file.
+- **Make changes** — ask what to change, update the config, and present again.
+</HARD-GATE>
 
 **Write to `.claude-shim.json`:**
 - If the file exists: read it, add or replace the `github-project-tools` key, preserve all other keys (like `quality-checks`), write back.
