@@ -26,8 +26,6 @@ class GitHubProjectToolsConfig(BaseModel):
 
 Optional for backward compatibility — existing configs without it are valid but trigger a migration prompt in the skills.
 
-Regenerate `claude-shim.schema.json` after updating the model.
-
 ### 2. Setup Skill Writes Repo to Config
 
 `setup-github-project-tools` SKILL.md Step 6 (Write Config) includes `repo` in the JSON:
@@ -89,7 +87,6 @@ No issues found. The skill is repo-agnostic and works correctly.
 | `plugins/github-project-tools/hook/src/github_project_tools/cli.py` | Remove dead `detect_repo` call in `repo_only_cmds` |
 | `plugins/github-project-tools/hook/tests/test_config.py` | Add tests for config with/without `repo` field |
 | `plugins/github-project-tools/hook/tests/test_cli.py` | Update test configs, add `read-config` test with repo |
-| `plugins/quality-check-hook/claude-shim.schema.json` | Regenerate to include `repo` field |
 | `plugins/github-project-tools/skills/setup-github-project-tools/SKILL.md` | Add `repo` to Step 6 config JSON |
 | `plugins/github-project-tools/skills/add-issue/prompts/setup.md` | Add repo check after read-config |
 | `plugins/github-project-tools/skills/start-implementation/prompts/setup.md` | Same (shared prompt) |
