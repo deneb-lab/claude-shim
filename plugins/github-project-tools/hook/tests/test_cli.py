@@ -44,6 +44,48 @@ class TestReadConfig:
         output = json.loads(capsys.readouterr().out)
         assert output["project"] == "https://github.com/users/testowner/projects/1"
 
+    def test_outputs_repo_when_present(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        config_data: dict[str, object] = {
+            "github-project-tools": {
+                "repo": "owner/my-repo",
+                "project": "https://github.com/users/testowner/projects/1",
+                "fields": {
+                    "start-date": "PVTF_start",
+                    "end-date": "PVTF_end",
+                    "status": {
+                        "id": "PVTF_status",
+                        "todo": {"name": "Todo", "option-id": "PVTO_1"},
+                        "in-progress": {
+                            "name": "In Progress",
+                            "option-id": "PVTO_2",
+                        },
+                        "done": {"name": "Done", "option-id": "PVTO_3"},
+                    },
+                },
+            }
+        }
+        config_file = tmp_path / ".claude-shim.json"
+        config_file.write_text(json.dumps(config_data))
+
+        exit_code = main(["read-config"], cwd=tmp_path)
+
+        assert exit_code == 0
+        output = json.loads(capsys.readouterr().out)
+        assert output["repo"] == "owner/my-repo"
+
+    def test_outputs_null_repo_when_absent(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        make_config(tmp_path)
+
+        exit_code = main(["read-config"], cwd=tmp_path)
+
+        assert exit_code == 0
+        output = json.loads(capsys.readouterr().out)
+        assert output["repo"] is None
+
     def test_missing_config_exits_1(self, tmp_path: Path) -> None:
         exit_code = main(["read-config"], cwd=tmp_path)
         assert exit_code == 1
