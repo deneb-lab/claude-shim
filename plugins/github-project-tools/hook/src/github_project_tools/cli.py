@@ -263,25 +263,6 @@ def cmd_issue_create(repo: str, args: list[str]) -> int:
     return 0
 
 
-def cmd_issue_edit(repo: str, number: str, args: list[str]) -> int:
-    body = ""
-    i = 0
-    while i < len(args):
-        if args[i] == "--body":
-            body = args[i + 1]
-            i += 2
-        else:
-            print(f"issue-edit: unknown arg: {args[i]}", file=sys.stderr)
-            return 1
-    if not body:
-        print("issue-edit: --body required", file=sys.stderr)
-        return 1
-    result = run_gh(["issue", "edit", number, "--repo", repo, "--body", body])
-    if result.stdout:
-        print(result.stdout, end="")
-    return 0
-
-
 def cmd_issue_close(repo: str, number: str, args: list[str]) -> int:
     comment = ""
     i = 0
@@ -313,6 +294,25 @@ def cmd_issue_close(repo: str, number: str, args: list[str]) -> int:
 
 def cmd_issue_assign(repo: str, number: str) -> int:
     result = run_gh(["issue", "edit", number, "--repo", repo, "--add-assignee", "@me"])
+    if result.stdout:
+        print(result.stdout, end="")
+    return 0
+
+
+def cmd_issue_get_assignees(repo: str, number: str) -> int:
+    result = run_gh(
+        [
+            "issue",
+            "view",
+            number,
+            "--repo",
+            repo,
+            "--json",
+            "assignees",
+            "--jq",
+            "[.assignees[].login]",
+        ]
+    )
     if result.stdout:
         print(result.stdout, end="")
     return 0
@@ -376,6 +376,40 @@ def cmd_get_start_date(config: GitHubProjectToolsConfig, node_id: str) -> int:
     )
     if result.stdout:
         print(result.stdout, end="")
+    return 0
+
+
+def cmd_get_status_change_date(config: GitHubProjectToolsConfig, node_id: str) -> int:
+    """Get date when issue was added to project (proxy for 'in progress' date)."""
+    project_id = get_project_id(config)
+    result = graphql(
+        """
+        query($id: ID!) {
+          node(id: $id) {
+            ... on Issue {
+              timelineItems(first: 100, itemTypes: [ADDED_TO_PROJECT_V2_EVENT]) {
+                nodes {
+                  ... on AddedToProjectV2Event {
+                    createdAt
+                    project { id }
+                  }
+                }
+              }
+            }
+          }
+        }""",
+        {"id": node_id},
+        jq_filter=(
+            "[.data.node.timelineItems.nodes[]"
+            f' | select(.project.id == "{project_id}")'
+            " | .createdAt[:10]] | last"
+        ),
+    )
+    out = result.stdout.strip() if result.stdout else ""
+    if out and out != "null":
+        print(out)
+    else:
+        print("null")
     return 0
 
 
@@ -513,49 +547,6 @@ def cmd_set_parent(child_id: str, parent_id: str) -> int:
     return 0
 
 
-def cmd_table_set_status(
-    repo: str,
-    parent_number: str,
-    sub_number: str,
-    new_status: str,
-) -> int:
-    """Update the status column in an Action Plan markdown table."""
-    result = run_gh(
-        [
-            "issue",
-            "view",
-            parent_number,
-            "--repo",
-            repo,
-            "--json",
-            "body",
-            "--jq",
-            ".body",
-        ]
-    )
-    body = result.stdout
-
-    # Port the awk logic: match lines containing /issues/<sub_number>) or
-    # #<sub_number>), then replace the last | ... | with | <status> |
-    issue_pat = re.compile(
-        rf"(?:/issues/{re.escape(sub_number)}\)|#{re.escape(sub_number)}\))"
-    )
-    trailing_col = re.compile(r"\| [^|]* \|$")
-
-    lines = body.split("\n")
-    updated_lines: list[str] = []
-    for line in lines:
-        if issue_pat.search(line):
-            m = trailing_col.search(line)
-            if m:
-                line = line[: m.start()] + f"| {new_status} |"
-        updated_lines.append(line)
-
-    updated_body = "\n".join(updated_lines)
-    run_gh(["issue", "edit", parent_number, "--repo", repo, "--body", updated_body])
-    return 0
-
-
 # --- Main dispatch ---
 
 
@@ -601,9 +592,9 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
         "issue-view",
         "issue-view-full",
         "issue-create",
-        "issue-edit",
         "issue-close",
         "issue-assign",
+        "issue-get-assignees",
         "issue-list",
     }
     if subcmd in issue_cmds:
@@ -615,12 +606,12 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
             return cmd_issue_view_full(resolved_repo, sub_args[0])
         if subcmd == "issue-create":
             return cmd_issue_create(resolved_repo, sub_args)
-        if subcmd == "issue-edit":
-            return cmd_issue_edit(resolved_repo, sub_args[0], sub_args[1:])
         if subcmd == "issue-close":
             return cmd_issue_close(resolved_repo, sub_args[0], sub_args[1:])
         if subcmd == "issue-assign":
             return cmd_issue_assign(resolved_repo, sub_args[0])
+        if subcmd == "issue-get-assignees":
+            return cmd_issue_get_assignees(resolved_repo, sub_args[0])
         if subcmd == "issue-list":
             return cmd_issue_list(resolved_repo, sub_args)
 
@@ -628,6 +619,7 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
     config_cmds = {
         "get-project-item",
         "get-start-date",
+        "get-status-change-date",
         "add-to-project",
         "set-status",
         "set-date",
@@ -639,6 +631,8 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
             return cmd_get_project_item(config, sub_args[0])
         if subcmd == "get-start-date":
             return cmd_get_start_date(config, sub_args[0])
+        if subcmd == "get-status-change-date":
+            return cmd_get_status_change_date(config, sub_args[0])
         if subcmd == "add-to-project":
             return cmd_add_to_project(config, sub_args[0])
         if subcmd == "set-status":
@@ -651,7 +645,6 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
         "get-parent",
         "count-open-sub-issues",
         "set-parent",
-        "table-set-status",
     }
     if subcmd in repo_only_cmds:
         resolved_repo = detect_repo(repo)
@@ -662,10 +655,6 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
             return cmd_count_open_sub_issues(sub_args[0])
         if subcmd == "set-parent":
             return cmd_set_parent(sub_args[0], sub_args[1])
-        if subcmd == "table-set-status":
-            return cmd_table_set_status(
-                resolved_repo, sub_args[0], sub_args[1], sub_args[2]
-            )
 
     print(f"Unknown subcommand: {subcmd}", file=sys.stderr)
     return 1

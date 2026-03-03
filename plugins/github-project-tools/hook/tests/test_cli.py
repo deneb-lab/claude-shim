@@ -213,38 +213,6 @@ class TestIssueCreate:
         assert "body" in capsys.readouterr().err.lower()
 
 
-class TestIssueEdit:
-    def test_edit_with_body(self, capsys: pytest.CaptureFixture[str]) -> None:
-        with patch("github_project_tools.cli.run_gh") as mock_run:
-            mock_run.return_value = subprocess.CompletedProcess(
-                args=[], returncode=0, stdout="", stderr=""
-            )
-            exit_code = main(
-                [
-                    "--repo",
-                    "owner/repo",
-                    "issue-edit",
-                    "42",
-                    "--body",
-                    "Updated body",
-                ]
-            )
-        assert exit_code == 0
-        call_args = mock_run.call_args[0][0]
-        assert "edit" in call_args
-        assert "42" in call_args
-        assert "--body" in call_args
-        assert "Updated body" in call_args
-
-    def test_edit_missing_body_exits_1(
-        self, capsys: pytest.CaptureFixture[str]
-    ) -> None:
-        with patch("github_project_tools.cli.run_gh"):
-            exit_code = main(["--repo", "owner/repo", "issue-edit", "42"])
-        assert exit_code == 1
-        assert "body" in capsys.readouterr().err.lower()
-
-
 class TestIssueAssign:
     def test_assigns_to_me(self) -> None:
         with patch("github_project_tools.cli.run_gh") as mock_run:
@@ -688,80 +656,6 @@ class TestSetParent:
         assert "child=I_child" in call_str
 
 
-class TestTableSetStatus:
-    def test_updates_status_in_table(self) -> None:
-        body = (
-            "## Action Plan\n"
-            "| Task | Status |\n"
-            "| --- | --- |\n"
-            "| [Task 1](https://github.com/owner/repo/issues/5) | Todo |\n"
-            "| [Task 2](https://github.com/owner/repo/issues/6) | Todo |\n"
-        )
-        with patch("github_project_tools.cli.run_gh") as mock_run:
-            mock_run.side_effect = [
-                # issue view to get body
-                subprocess.CompletedProcess(
-                    args=[], returncode=0, stdout=body, stderr=""
-                ),
-                # issue edit to set body
-                subprocess.CompletedProcess(
-                    args=[], returncode=0, stdout="", stderr=""
-                ),
-            ]
-            exit_code = main(
-                [
-                    "--repo",
-                    "owner/repo",
-                    "table-set-status",
-                    "1",
-                    "5",
-                    "In Progress",
-                ]
-            )
-        assert exit_code == 0
-        # Check the edited body contains updated status
-        edit_call = mock_run.call_args_list[1]
-        edit_args = edit_call[0][0]
-        body_idx = edit_args.index("--body")
-        updated_body = edit_args[body_idx + 1]
-        assert "In Progress" in updated_body
-        # Task 2 should be unchanged
-        assert "| Todo |" in updated_body
-
-    def test_updates_shorthand_reference(self) -> None:
-        body = (
-            "## Action Plan\n"
-            "| Task | Status |\n"
-            "| --- | --- |\n"
-            "| [Task 1](#5) | Todo |\n"
-        )
-        with patch("github_project_tools.cli.run_gh") as mock_run:
-            mock_run.side_effect = [
-                subprocess.CompletedProcess(
-                    args=[], returncode=0, stdout=body, stderr=""
-                ),
-                subprocess.CompletedProcess(
-                    args=[], returncode=0, stdout="", stderr=""
-                ),
-            ]
-            exit_code = main(
-                [
-                    "--repo",
-                    "owner/repo",
-                    "table-set-status",
-                    "1",
-                    "5",
-                    "Done",
-                ]
-            )
-        assert exit_code == 0
-        edit_call = mock_run.call_args_list[1]
-        edit_args = edit_call[0][0]
-        body_idx = edit_args.index("--body")
-        updated_body = edit_args[body_idx + 1]
-        assert "Done" in updated_body
-
-
 # --- Discovery subcommand tests (setup skill) ---
 
 
@@ -846,6 +740,121 @@ class TestProjectFieldList:
         exit_code = main(["project-field-list", "--owner", "elahti"])
         assert exit_code == 1
         assert "number" in capsys.readouterr().err.lower()
+
+
+class TestIssueGetAssignees:
+    def test_returns_assignee_logins(self, capsys: pytest.CaptureFixture[str]) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout='["elahti","other-user"]\n',
+                stderr="",
+            )
+            exit_code = main(["--repo", "owner/repo", "issue-get-assignees", "42"])
+        assert exit_code == 0
+        out = capsys.readouterr().out
+        assert "elahti" in out
+        assert "other-user" in out
+        call_args = mock_run.call_args[0][0]
+        assert "issue" in call_args
+        assert "view" in call_args
+        assert "42" in call_args
+        assert "assignees" in call_args
+
+    def test_returns_empty_array_when_unassigned(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout="[]\n",
+                stderr="",
+            )
+            exit_code = main(["--repo", "owner/repo", "issue-get-assignees", "42"])
+        assert exit_code == 0
+        out = capsys.readouterr().out
+        assert "[]" in out
+
+
+class TestGetStatusChangeDate:
+    def test_returns_date_from_timeline(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        make_config(tmp_path)
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                # get_project_id call
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="PVT_proj\n", stderr=""
+                ),
+                # GraphQL timeline query
+                subprocess.CompletedProcess(
+                    args=[],
+                    returncode=0,
+                    stdout="2024-02-20\n",
+                    stderr="",
+                ),
+            ]
+            exit_code = main(
+                ["--repo", "owner/repo", "get-status-change-date", "I_node"],
+                cwd=tmp_path,
+            )
+        assert exit_code == 0
+        out = capsys.readouterr().out.strip()
+        assert out == "2024-02-20"
+
+    def test_returns_null_when_jq_returns_null(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        make_config(tmp_path)
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="PVT_proj\n", stderr=""
+                ),
+                # jq "last" on empty array returns literal "null"
+                subprocess.CompletedProcess(
+                    args=[],
+                    returncode=0,
+                    stdout="null\n",
+                    stderr="",
+                ),
+            ]
+            exit_code = main(
+                ["--repo", "owner/repo", "get-status-change-date", "I_node"],
+                cwd=tmp_path,
+            )
+        assert exit_code == 0
+        out = capsys.readouterr().out.strip()
+        assert out == "null"
+
+    def test_returns_null_when_no_events(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        make_config(tmp_path)
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                # get_project_id call
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="PVT_proj\n", stderr=""
+                ),
+                # GraphQL timeline query — no matching events
+                subprocess.CompletedProcess(
+                    args=[],
+                    returncode=0,
+                    stdout="",
+                    stderr="",
+                ),
+            ]
+            exit_code = main(
+                ["--repo", "owner/repo", "get-status-change-date", "I_node"],
+                cwd=tmp_path,
+            )
+        assert exit_code == 0
+        out = capsys.readouterr().out.strip()
+        assert out == "null"
 
 
 class TestIssueList:
