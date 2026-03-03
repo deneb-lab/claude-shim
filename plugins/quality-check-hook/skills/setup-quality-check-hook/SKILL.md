@@ -106,7 +106,7 @@ Show the user the proposed `.claude-shim.json` as formatted JSON. For each entry
 - The detected package runner (if applicable)
 - Any non-root config paths detected
 
-Ask the user to confirm, or tell you what to change. Iterate until they're satisfied.
+Present the proposed config to the user and ask what they want to change. Iterate until they're satisfied.
 
 The user may:
 - Remove entries for languages they don't want checked
@@ -115,6 +115,14 @@ The user may:
 - Change patterns (e.g., exclude test files from formatting)
 - Add or remove exclude patterns
 - Override the package runner
+
+When the user is satisfied, use AskUserQuestion for final confirmation:
+- **Approve and write** — proceed to Step 6.
+- **Make changes** — ask what to change, update the config, and present again.
+
+<HARD-GATE>
+Do NOT proceed to Step 6 until the user has explicitly selected "Approve and write" via AskUserQuestion. Presenting the config is NOT the same as getting approval.
+</HARD-GATE>
 
 ## Step 6: Write Config
 

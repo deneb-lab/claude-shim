@@ -36,7 +36,9 @@ Auto-detect the repository:
 
 Save the output as `REPO` (e.g., `owner/repo`). Extract `OWNER` as the part before `/`.
 
-Confirm with the user: "Detected repository: `REPO`. Issues will be created and managed in this repository. Correct?"
+Use AskUserQuestion to confirm with the user: "Detected repository: `REPO`. Issues will be created and managed in this repository."
+- **Yes, use this repository** — proceed to Step 3.
+- **No, let me specify** — ask the user for the correct `owner/repo` value, save it as `REPO`, re-extract `OWNER`, and proceed to Step 3.
 
 ## Step 3: Detect Project
 
@@ -49,7 +51,9 @@ Parse the JSON output. The `.projects` array contains objects with `number`, `ti
 
 - **If no projects found:** Tell the user "No GitHub Projects found for owner `OWNER`. Create a project first, then re-run this setup." Stop.
 
-- **If exactly one project:** Auto-select it. Tell the user: "Found project: `title` (`url`). Using this project." Ask for confirmation.
+- **If exactly one project:** Use AskUserQuestion to confirm: "Found one project: `title` (`url`)."
+  - **Yes, use this project** — proceed.
+  - **No** — tell the user "No other projects found for owner `OWNER`. Create another project first, then re-run this setup." Stop.
 
 - **If multiple projects:** Try to auto-detect which project is used by this repo:
   ```bash
@@ -134,7 +138,13 @@ Build the configuration object:
 }
 ```
 
-Present the final config JSON to the user for confirmation.
+Present the final config JSON to the user.
+
+<HARD-GATE>
+Do NOT write `.claude-shim.json` until the user has explicitly approved. Use AskUserQuestion:
+- **Approve and write** — proceed to write the file.
+- **Make changes** — ask what to change, update the config, and present again.
+</HARD-GATE>
 
 **Write to `.claude-shim.json`:**
 - If the file exists: read it, add or replace the `github-project-tools` key, preserve all other keys (like `quality-checks`), write back.
