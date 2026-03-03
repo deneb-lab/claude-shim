@@ -1,7 +1,7 @@
 ---
 name: end-implementation
 description: Close a GitHub issue - sets end date, done status, closes issue, updates parent lifecycle
-allowed-tools: Bash(*/github-project-tools/scripts/github-project-tools.sh preflight), Bash(*/github-project-tools/scripts/github-project-tools.sh read-config), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-view-full *), Bash(*/github-project-tools/scripts/github-project-tools.sh get-parent *), Bash(*/github-project-tools/scripts/github-project-tools.sh get-project-item *), Bash(*/github-project-tools/scripts/github-project-tools.sh set-date *), Bash(*/github-project-tools/scripts/github-project-tools.sh set-status *), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-close *), Bash(*/github-project-tools/scripts/github-project-tools.sh count-open-sub-issues *)
+allowed-tools: Bash(*/github-project-tools/scripts/github-project-tools.sh preflight), Bash(*/github-project-tools/scripts/github-project-tools.sh read-config), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-view-full *), Bash(*/github-project-tools/scripts/github-project-tools.sh get-parent *), Bash(*/github-project-tools/scripts/github-project-tools.sh get-project-item *), Bash(*/github-project-tools/scripts/github-project-tools.sh set-date *), Bash(*/github-project-tools/scripts/github-project-tools.sh set-status *), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-close *), Bash(*/github-project-tools/scripts/github-project-tools.sh count-open-sub-issues *), Bash(*/github-project-tools/scripts/github-project-tools.sh get-start-date *), Bash(*/github-project-tools/scripts/github-project-tools.sh get-status-change-date *), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-get-assignees *), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-assign *)
 ---
 
 # GitHub Projects — End Implementation
@@ -22,13 +22,13 @@ All CLI commands below use `<cli>` to mean the invocation pattern established du
 
 ## Phase 1: Setup (conditional)
 
-**If state from `start-implementation` is already in the conversation context** (NODE_ID, ITEM_ID, field IDs, and parent info are known), **skip to Phase 2.5.**
+**If state from `start-implementation` is already in the conversation context** (NODE_ID, ITEM_ID, field IDs, and parent info are known), **skip to Phase 2.3.**
 
 Otherwise, follow the steps in [prompts/setup.md](prompts/setup.md).
 
 ## Phase 2: Fetch Issue (conditional)
 
-**If state from `start-implementation` is already in the conversation context**, **skip to Phase 2.5.**
+**If state from `start-implementation` is already in the conversation context**, **skip to Phase 2.3.**
 
 Otherwise:
 
@@ -57,15 +57,54 @@ Otherwise:
    - `PARENT_NUMBER` from `.number`
    - `PARENT_TITLE` from `.title`
 
-## Phase 2.5: Generate Implementation Summary
+## Phase 2.3: Pre-Close Checks
 
-This phase adds a closing comment summarizing what was implemented. The summary provides context for future Claude sessions reviewing this issue.
+These checks ensure the issue is in a clean state before closing.
 
-**This phase only runs when there is implementation context in the conversation** (i.e., handoff from `start-implementation` where actual implementation work was done in this session). If this skill was invoked standalone with no prior implementation context, **skip this phase entirely** — close the issue without a comment.
+1. **If a project is available**, check if the issue has a start date:
+   ```bash
+   <cli> get-start-date "$NODE_ID"
+   ```
+   - If the output is **non-empty** and the `.date` field is **not `null`**: start date is already set. Skip to step 2.
+   - If the output is **empty** or `.date` is `null`: no start date. Try to auto-detect one:
+     ```bash
+     <cli> get-status-change-date "$NODE_ID"
+     ```
+     - If the output is a date (not `null`): suggest that date.
+     - If the output is `null`: suggest today's date.
+     - **Ask the user:** "Issue has no start date. Set to <suggested date>?"
+     - If confirmed:
+       - Get the ITEM_ID if not already known:
+         ```bash
+         <cli> get-project-item "$NODE_ID"
+         ```
+       - Set the start date:
+         ```bash
+         <cli> set-date "$ITEM_ID" "$START_FIELD" <date>
+         ```
 
-1. Review the conversation context: what was discussed, built, changed, and committed during this session.
+2. Check if the current user is assigned to the issue:
+   ```bash
+   <cli> issue-get-assignees <number>
+   ```
+   Check if the current user's login is in the returned JSON array. To determine the current user, the login used during `gh auth status` is available — or simply check if the array is non-empty (if no one is assigned, offer to assign).
+   - If the user is **not** in the assignees list: **Ask the user:** "Assign yourself to #<number>?"
+   - If confirmed:
+     ```bash
+     <cli> issue-assign <number>
+     ```
 
-2. Generate a concise summary in this format:
+## Phase 2.5: Closing Comment
+
+Generate an optional closing comment summarizing what was implemented. This provides context for future sessions reviewing this issue.
+
+1. **Determine available context:**
+
+   - **Check git state:** Run `git rev-parse --abbrev-ref HEAD` to get the current branch. If the branch is not `main` (or the default branch), there may be relevant commits.
+   - **If on a non-main branch:** Run `git log main..HEAD --oneline` to get the commit list. Cross-check these commits against the issue title and body to determine relevance. If unsure whether the commits relate to this issue, ask the user.
+   - **Conversation context:** If this is a handoff from `start-implementation` (implementation work was done in this session), also use the conversation context — what was discussed, built, and changed.
+
+2. **Generate a summary** using the available context (conversation + git log):
 
    ```markdown
    ## Implementation Summary
@@ -73,13 +112,15 @@ This phase adds a closing comment summarizing what was implemented. The summary 
    - <what was done, 3-7 bullets>
    ```
 
-   Each bullet should describe a concrete change (e.g., "Added `--comment` flag to `issue-close` subcommand in `cli.py`"). Focus on what changed, not why.
+   Each bullet should describe a concrete change. Focus on what changed, not why.
 
-3. Present the summary to the user: "Here's the implementation summary that will be posted as a closing comment:" followed by the formatted summary.
+   - If there is **no usable context** (on main branch, no relevant commits, no conversation context): skip the auto-generated summary and go directly to step 3.
 
-4. Ask the user to approve: **"Post this summary as a closing comment?"**
-   - **If yes:** Save the summary text as `SUMMARY` for use in Phase 3.
-   - **If no / skip:** Set `SUMMARY` to empty. The issue will be closed without a comment.
+3. **Present to the user:**
+   - If a summary was generated: "Here's the closing comment that will be posted:" followed by the summary. Ask: **"Post this as a closing comment? (You can also edit it, write your own, or skip.)"**
+   - If no summary was generated: **"Would you like to add a closing comment before closing the issue? (You can write one or skip.)"**
+   - **If approved (or user provides custom text):** Save as `SUMMARY` for use in Phase 3.
+   - **If skipped:** Set `SUMMARY` to empty. The issue will be closed without a comment.
 
 ## Phase 3: Set End State
 
@@ -139,7 +180,17 @@ This phase adds a closing comment summarizing what was implemented. The summary 
 
       - If the user declines, leave the parent as-is.
 
-4. Tell the user the issue is implemented and closed.
+4. **If a parent issue exists**, check parent assignment:
+   ```bash
+   <cli> issue-get-assignees <PARENT_NUMBER>
+   ```
+   - If the current user is **not** in the assignees list: **Ask the user:** "Assign yourself to parent #PARENT_NUMBER (PARENT_TITLE)?"
+   - If confirmed:
+     ```bash
+     <cli> issue-assign <PARENT_NUMBER>
+     ```
+
+5. Tell the user the issue is implemented and closed.
 
 ## Important Notes
 
