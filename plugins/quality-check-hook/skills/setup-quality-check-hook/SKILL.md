@@ -116,6 +116,14 @@ The user may:
 - Add or remove exclude patterns
 - Override the package runner
 
+When the user is satisfied, use AskUserQuestion for final confirmation:
+- **Approve and write** — proceed to Step 6.
+- **Make changes** — ask what to change, update the config, and present again.
+
+<HARD-GATE>
+Do NOT proceed to Step 6 until the user has explicitly selected "Approve and write" via AskUserQuestion. Presenting the config is NOT the same as getting approval.
+</HARD-GATE>
+
 ## Step 6: Write Config
 
 Write the final `.claude-shim.json` to the repository root:
