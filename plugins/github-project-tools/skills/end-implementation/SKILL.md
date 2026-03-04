@@ -1,7 +1,7 @@
 ---
 name: end-implementation
 description: Close a GitHub issue - sets end date, done status, closes issue, updates parent lifecycle
-allowed-tools: Bash(*/github-project-tools/scripts/github-project-tools.sh preflight), Bash(*/github-project-tools/scripts/github-project-tools.sh read-config), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-view-full *), Bash(*/github-project-tools/scripts/github-project-tools.sh get-parent *), Bash(*/github-project-tools/scripts/github-project-tools.sh get-project-item *), Bash(*/github-project-tools/scripts/github-project-tools.sh set-date *), Bash(*/github-project-tools/scripts/github-project-tools.sh set-status *), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-close *), Bash(*/github-project-tools/scripts/github-project-tools.sh count-open-sub-issues *), Bash(*/github-project-tools/scripts/github-project-tools.sh get-start-date *), Bash(*/github-project-tools/scripts/github-project-tools.sh get-status-change-date *), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-get-assignees *), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-assign *)
+allowed-tools: Bash(*/github-project-tools/scripts/github-project-tools.sh preflight), Bash(*/github-project-tools/scripts/github-project-tools.sh read-config), Bash(*/github-project-tools/scripts/github-project-tools.sh repo-detect), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-view-full *), Bash(*/github-project-tools/scripts/github-project-tools.sh get-parent *), Bash(*/github-project-tools/scripts/github-project-tools.sh get-project-item *), Bash(*/github-project-tools/scripts/github-project-tools.sh set-date *), Bash(*/github-project-tools/scripts/github-project-tools.sh set-status *), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-close *), Bash(*/github-project-tools/scripts/github-project-tools.sh count-open-sub-issues *), Bash(*/github-project-tools/scripts/github-project-tools.sh get-start-date *), Bash(*/github-project-tools/scripts/github-project-tools.sh get-status-change-date *), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-get-assignees *), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-assign *), Bash(git rev-parse *), Bash(git log *)
 ---
 
 # GitHub Projects — End Implementation
@@ -180,7 +180,7 @@ Generate an optional closing comment summarizing what was implemented. This prov
 
       - If the user declines, leave the parent as-is.
 
-4. **If a parent issue exists**, check parent assignment:
+4. **If a parent issue exists and was not closed in step 3**, check parent assignment:
    ```bash
    <cli> issue-get-assignees <PARENT_NUMBER>
    ```

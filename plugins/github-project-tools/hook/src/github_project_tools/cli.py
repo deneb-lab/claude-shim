@@ -284,11 +284,22 @@ def cmd_issue_close(repo: str, number: str, args: list[str]) -> int:
         cmd = ["issue", "close", number, "--repo", repo, "--reason", "completed"]
         if comment:
             cmd.extend(["--comment", comment])
-        run_gh(cmd)
+        result = run_gh(cmd)
+        if result.returncode != 0:
+            print(f"issue-close: failed to close #{number}", file=sys.stderr)
+            return 1
     else:
         print(f"Issue #{number} is already closed — skipping close.", file=sys.stderr)
         if comment:
-            run_gh(["issue", "comment", number, "--repo", repo, "--body", comment])
+            result = run_gh(
+                ["issue", "comment", number, "--repo", repo, "--body", comment]
+            )
+            if result.returncode != 0:
+                print(
+                    f"issue-close: failed to add comment to #{number}",
+                    file=sys.stderr,
+                )
+                return 1
     return 0
 
 
@@ -351,6 +362,7 @@ def cmd_get_project_item(config: GitHubProjectToolsConfig, node_id: str) -> int:
 
 def cmd_get_start_date(config: GitHubProjectToolsConfig, node_id: str) -> int:
     project_id = get_project_id(config)
+    start_field_id = config.fields.start_date
     result = graphql(
         """
         query($id: ID!) {
@@ -360,8 +372,13 @@ def cmd_get_start_date(config: GitHubProjectToolsConfig, node_id: str) -> int:
                 nodes {
                   id
                   project { id }
-                  fieldValueByName(name: "Start date") {
-                    ... on ProjectV2ItemFieldDateValue { date }
+                  fieldValues(first: 20) {
+                    nodes {
+                      ... on ProjectV2ItemFieldDateValue {
+                        date
+                        field { ... on ProjectV2Field { id } }
+                      }
+                    }
                   }
                 }
               }
@@ -371,7 +388,8 @@ def cmd_get_start_date(config: GitHubProjectToolsConfig, node_id: str) -> int:
         {"id": node_id},
         jq_filter=(
             f'.data.node.projectItems.nodes[] | select(.project.id == "{project_id}")'
-            " | {item_id: .id, date: (.fieldValueByName.date // null)}"
+            f" | {{item_id: .id, date: ([.fieldValues.nodes[]"
+            f' | select(.field.id == "{start_field_id}") | .date] | first // null)}}'
         ),
     )
     if result.stdout:
@@ -473,9 +491,10 @@ def cmd_set_date(
     config: GitHubProjectToolsConfig,
     item_id: str,
     field_id: str,
+    date_value: str | None = None,
 ) -> int:
     project_id = get_project_id(config)
-    today = datetime.now(UTC).date().isoformat()
+    date = date_value or datetime.now(UTC).date().isoformat()
     graphql(
         """
         mutation($project: ID!, $item: ID!, $field: ID!, $date: Date!) {
@@ -488,7 +507,7 @@ def cmd_set_date(
             "project": project_id,
             "item": item_id,
             "field": field_id,
-            "date": today,
+            "date": date,
         },
     )
     return 0
@@ -638,7 +657,8 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
         if subcmd == "set-status":
             return cmd_set_status(config, sub_args[0], sub_args[1])
         if subcmd == "set-date":
-            return cmd_set_date(config, sub_args[0], sub_args[1])
+            date_val = sub_args[2] if len(sub_args) > 2 else None
+            return cmd_set_date(config, sub_args[0], sub_args[1], date_val)
 
     # Repo-only subcommands (no config needed)
     repo_only_cmds = {

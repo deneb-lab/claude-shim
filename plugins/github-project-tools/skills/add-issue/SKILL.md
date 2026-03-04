@@ -1,7 +1,7 @@
 ---
 name: add-issue
 description: Create a GitHub issue from conversation context and add it to the project board with Todo status
-allowed-tools: Bash(*/github-project-tools/scripts/github-project-tools.sh preflight), Bash(*/github-project-tools/scripts/github-project-tools.sh read-config), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-create *), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-view *), Bash(*/github-project-tools/scripts/github-project-tools.sh add-to-project *), Bash(*/github-project-tools/scripts/github-project-tools.sh set-status *), Bash(*/github-project-tools/scripts/github-project-tools.sh set-parent *)
+allowed-tools: Bash(*/github-project-tools/scripts/github-project-tools.sh preflight), Bash(*/github-project-tools/scripts/github-project-tools.sh read-config), Bash(*/github-project-tools/scripts/github-project-tools.sh repo-detect), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-create *), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-view *), Bash(*/github-project-tools/scripts/github-project-tools.sh add-to-project *), Bash(*/github-project-tools/scripts/github-project-tools.sh set-status *), Bash(*/github-project-tools/scripts/github-project-tools.sh set-parent *)
 ---
 
 # GitHub — Add Issue
@@ -48,17 +48,19 @@ The default project is auto-detected from the repo owner's GitHub projects.
 
    Save the output as `NODE_ID`.
 
-3. Add to project:
-   ```bash
-   <cli> add-to-project "$NODE_ID"
-   ```
+3. **If a project is available** (config was loaded successfully in Phase 1):
 
-   Save the output as `ITEM_ID`.
+   a. Add to project:
+      ```bash
+      <cli> add-to-project "$NODE_ID"
+      ```
 
-4. Set status to "Todo":
-   ```bash
-   <cli> set-status "$ITEM_ID" todo
-   ```
+      Save the output as `ITEM_ID`.
+
+   b. Set status to "Todo":
+      ```bash
+      <cli> set-status "$ITEM_ID" todo
+      ```
 
 ## Phase 3.5: Link Parent (conditional)
 

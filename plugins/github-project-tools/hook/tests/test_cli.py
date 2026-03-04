@@ -354,6 +354,22 @@ class TestIssueClose:
         assert "--body" in comment_args
         assert "Late comment" in comment_args
 
+    def test_close_failure_returns_nonzero(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="OPEN\n", stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[], returncode=1, stdout="", stderr="network error"
+                ),
+            ]
+            exit_code = main(["--repo", "owner/repo", "issue-close", "42"])
+        assert exit_code == 1
+        assert "failed" in capsys.readouterr().err.lower()
+
 
 # --- Helper function tests ---
 
@@ -516,6 +532,33 @@ class TestSetDate:
 
         assert re.search(r"\d{4}-\d{2}-\d{2}", call_str)
 
+    def test_sets_explicit_date(self, tmp_path: Path) -> None:
+        make_config(tmp_path)
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="PVT_proj\n", stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout='{"data":{}}', stderr=""
+                ),
+            ]
+            exit_code = main(
+                [
+                    "--repo",
+                    "owner/repo",
+                    "set-date",
+                    "PVTI_item",
+                    "PVTF_start",
+                    "2024-06-15",
+                ],
+                cwd=tmp_path,
+            )
+        assert exit_code == 0
+        graphql_call = mock_run.call_args_list[1]
+        call_str = " ".join(graphql_call[0][0])
+        assert "2024-06-15" in call_str
+
 
 class TestGetProjectItem:
     def test_returns_item_id(
@@ -580,6 +623,24 @@ class TestGetStartDate:
         assert exit_code == 0
         out = capsys.readouterr().out
         assert "PVTI_x" in out
+
+    def test_uses_field_id_from_config(self, tmp_path: Path) -> None:
+        make_config(tmp_path)
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="PVT_proj\n", stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="", stderr=""
+                ),
+            ]
+            main(["--repo", "owner/repo", "get-start-date", "I_node"], cwd=tmp_path)
+        graphql_call = mock_run.call_args_list[1]
+        call_str = " ".join(graphql_call[0][0])
+        # Should use fieldValues (not fieldValueByName) and filter by config field ID
+        assert "fieldValues" in call_str
+        assert "PVTF_start" in call_str
 
 
 class TestAddToProject:
