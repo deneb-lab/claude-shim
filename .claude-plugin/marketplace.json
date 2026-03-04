@@ -5,7 +5,7 @@
   },
   "metadata": {
     "description": "Claude Code plugins for project management and automation",
-    "version": "1.0.10"
+    "version": "1.0.11"
   },
   "plugins": [
     {
