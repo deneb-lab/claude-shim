@@ -19,7 +19,7 @@
       "name": "quality-check-hook",
       "source": "./plugins/quality-check-hook",
       "description": "Config-driven quality checks for edited files — formatting, linting, auto-fix via PostToolUse hooks",
-      "version": "1.1.0"
+      "version": "1.1.1"
     }
   ]
 }
