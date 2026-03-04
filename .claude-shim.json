@@ -2,11 +2,21 @@
   "quality-checks": {
     "include": [
       {
-        "pattern": "**/*.py",
+        "pattern": "plugins/quality-check-hook/hook/**/*.py",
         "commands": [
           "uv run --project plugins/quality-check-hook/hook ruff format",
           "uv run --project plugins/quality-check-hook/hook ruff check --fix",
-          "uv run --project plugins/quality-check-hook/hook ruff check"
+          "uv run --project plugins/quality-check-hook/hook ruff check",
+          "uv run --project plugins/quality-check-hook/hook pyright --project plugins/quality-check-hook/hook"
+        ]
+      },
+      {
+        "pattern": "plugins/github-project-tools/hook/**/*.py",
+        "commands": [
+          "uv run --project plugins/github-project-tools/hook ruff format",
+          "uv run --project plugins/github-project-tools/hook ruff check --fix",
+          "uv run --project plugins/github-project-tools/hook ruff check",
+          "uv run --project plugins/github-project-tools/hook pyright --project plugins/github-project-tools/hook"
         ]
       },
       {
