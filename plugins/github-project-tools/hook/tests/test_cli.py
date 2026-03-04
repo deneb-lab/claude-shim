@@ -86,6 +86,48 @@ class TestReadConfig:
         output = json.loads(capsys.readouterr().out)
         assert output["repo"] is None
 
+    def test_outputs_list_status_format(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        config_data: dict[str, object] = {
+            "github-project-tools": {
+                "project": "https://github.com/users/testowner/projects/1",
+                "fields": {
+                    "start-date": "PVTF_start",
+                    "end-date": "PVTF_end",
+                    "status": {
+                        "id": "PVTF_status",
+                        "todo": {"name": "Todo", "option-id": "PVTO_1"},
+                        "in-progress": {"name": "In Progress", "option-id": "PVTO_2"},
+                        "done": [
+                            {
+                                "name": "Done",
+                                "option-id": "PVTO_3",
+                                "default": True,
+                            },
+                            {"name": "Arkisto", "option-id": "PVTO_4"},
+                        ],
+                    },
+                },
+            }
+        }
+        config_file = tmp_path / ".claude-shim.json"
+        config_file.write_text(json.dumps(config_data))
+
+        exit_code = main(["read-config"], cwd=tmp_path)
+
+        assert exit_code == 0
+        output = json.loads(capsys.readouterr().out)
+        # Single object stays as object
+        assert isinstance(output["fields"]["status"]["todo"], dict)
+        # List stays as list
+        assert isinstance(output["fields"]["status"]["done"], list)
+        assert len(output["fields"]["status"]["done"]) == 2
+        assert output["fields"]["status"]["done"][0]["option-id"] == "PVTO_3"
+        assert output["fields"]["status"]["done"][0]["default"] is True
+        assert output["fields"]["status"]["done"][1]["option-id"] == "PVTO_4"
+        assert output["fields"]["status"]["done"][1]["default"] is False
+
     def test_missing_config_exits_1(self, tmp_path: Path) -> None:
         exit_code = main(["read-config"], cwd=tmp_path)
         assert exit_code == 1
@@ -486,6 +528,59 @@ class TestSetStatus:
             cwd=tmp_path,
         )
         assert exit_code == 1
+
+    def test_uses_default_from_list_config(self, tmp_path: Path) -> None:
+        config_data: dict[str, object] = {
+            "github-project-tools": {
+                "project": "https://github.com/users/testowner/projects/1",
+                "fields": {
+                    "start-date": "PVTF_start",
+                    "end-date": "PVTF_end",
+                    "status": {
+                        "id": "PVTF_status",
+                        "todo": [
+                            {"name": "Todo", "option-id": "PVTO_1", "default": True}
+                        ],
+                        "in-progress": [
+                            {
+                                "name": "In Progress",
+                                "option-id": "PVTO_2",
+                                "default": True,
+                            }
+                        ],
+                        "done": [
+                            {
+                                "name": "Done",
+                                "option-id": "PVTO_3",
+                                "default": True,
+                            },
+                            {"name": "Arkisto", "option-id": "PVTO_4"},
+                        ],
+                    },
+                },
+            }
+        }
+        config_file = tmp_path / ".claude-shim.json"
+        config_file.write_text(json.dumps(config_data))
+
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="PVT_proj\n", stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout='{"data":{}}', stderr=""
+                ),
+            ]
+            exit_code = main(
+                ["--repo", "owner/repo", "set-status", "PVTI_item", "done"],
+                cwd=tmp_path,
+            )
+        assert exit_code == 0
+        # Should use PVTO_3 (the default), not PVTO_4
+        graphql_call = mock_run.call_args_list[1]
+        call_str = " ".join(graphql_call[0][0])
+        assert "PVTO_3" in call_str
 
     def test_uses_status_field_id(self, tmp_path: Path) -> None:
         make_config(tmp_path)

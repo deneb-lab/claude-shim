@@ -453,19 +453,16 @@ def cmd_set_status(
     item_id: str,
     status_key: str,
 ) -> int:
-    status_map: dict[str, str] = {
-        "todo": config.fields.status.todo.option_id,
-        "in-progress": config.fields.status.in_progress.option_id,
-        "done": config.fields.status.done.option_id,
-    }
-    option_id = status_map.get(status_key)
-    if option_id is None:
-        valid = ", ".join(status_map)
+    valid_keys = ("todo", "in-progress", "done")
+    if status_key not in valid_keys:
         print(
-            f"set-status: unknown status '{status_key}' (valid: {valid})",
+            f"set-status: unknown status '{status_key}' (valid: {', '.join(valid_keys)})",
             file=sys.stderr,
         )
         return 1
+
+    mapping = config.fields.status.get_default(status_key)
+    option_id = mapping.option_id
 
     project_id = get_project_id(config)
     field_id = config.fields.status.id

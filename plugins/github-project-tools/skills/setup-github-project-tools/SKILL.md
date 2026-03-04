@@ -94,6 +94,8 @@ The plugin automatically updates issue status as you work — it needs to know w
 - **Started work** — set when you begin implementing an issue
 - **Finished work** — set when you close an issue after implementation is complete
 
+Each stage can map to **one or more** status options. When multiple options map to the same stage, one must be marked as the **default** — the value used when the skill sets status for that stage.
+
 Using the status field's `.options` array from Step 4, auto-match option names to these stages:
 
 | Stage | Try matching (case-insensitive) |
@@ -103,23 +105,26 @@ Using the status field's `.options` array from Step 4, auto-match option names t
 | Finished work | "Done", "Complete", "Completed", "Shipped", "Closed" |
 
 For each stage:
-- If exactly one option matches, auto-assign it.
-- If multiple options match, ask the user to pick.
-- If no options match, present the full list and ask the user to assign.
+1. Auto-match candidates from the options list using the name patterns above.
+2. Present **all** status options to the user with AskUserQuestion using `multiSelect: true`. Pre-select any auto-matched options by listing them first and marking them as "(Recommended)" in the label.
+3. The user selects which options map to this stage (one or more).
+4. If multiple options were selected, ask the user which one should be the **default** (the status value used when the skill sets status for this stage).
+5. If only one option was selected, it is automatically the default.
 
 Present the proposed mapping for confirmation:
 ```
 Status mappings:
-  New issues    → "Todo"
-  Started work  → "In Progress"
-  Finished work → "Done"
+  New issues    → "Todo" (default)
+  Started work  → "In Progress" (default)
+  Finished work → "Done" (default), "Arkisto"
 ```
 
 Ask: "Does this look right?"
 
 ## Step 6: Write Config
 
-Build the configuration object:
+Build the configuration object. **Always write status mappings as lists**, even when a stage has only one option:
+
 ```json
 {
   "github-project-tools": {
@@ -130,14 +135,19 @@ Build the configuration object:
       "end-date": "<END_FIELD_ID>",
       "status": {
         "id": "<STATUS_FIELD_ID>",
-        "todo": { "name": "<name>", "option-id": "<id>" },
-        "in-progress": { "name": "<name>", "option-id": "<id>" },
-        "done": { "name": "<name>", "option-id": "<id>" }
+        "todo": [{ "name": "<name>", "option-id": "<id>", "default": true }],
+        "in-progress": [{ "name": "<name>", "option-id": "<id>", "default": true }],
+        "done": [
+          { "name": "<name>", "option-id": "<id>", "default": true },
+          { "name": "<name2>", "option-id": "<id2>" }
+        ]
       }
     }
   }
 }
 ```
+
+Non-default items in the list omit the `"default"` key (it defaults to `false`).
 
 Present the final config JSON to the user.
 
