@@ -126,7 +126,9 @@ Do NOT proceed to Step 6 until the user has explicitly selected "Approve and wri
 
 ## Step 6: Write Config
 
-Write the final `.claude-shim.json` to the repository root:
+If `.claude-shim.json` already exists: read it, add or replace the `quality-checks` key, preserve all other keys (like `github-project-tools`), and write the merged result back. If the file does not exist, create it with just the `quality-checks` key.
+
+The resulting file should contain:
 
 ```json
 {
