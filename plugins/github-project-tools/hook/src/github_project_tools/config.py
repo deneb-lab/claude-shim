@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, ValidationError, model_validator
 
 CONFIG_FILENAME = ".claude-shim.json"
 CONFIG_KEY = "github-project-tools"
@@ -17,9 +17,36 @@ class StatusMapping(BaseModel):
 
 class StatusField(BaseModel):
     id: str
-    todo: StatusMapping
-    in_progress: StatusMapping = Field(alias="in-progress")
-    done: StatusMapping
+    todo: StatusMapping | list[StatusMapping]
+    in_progress: StatusMapping | list[StatusMapping] = Field(alias="in-progress")
+    done: StatusMapping | list[StatusMapping]
+
+    @model_validator(mode="after")
+    def _check_list_defaults(self) -> StatusField:
+        for key in ("todo", "in_progress", "done"):
+            value = getattr(self, key)
+            if isinstance(value, list):
+                defaults = [m for m in value if m.default]
+                label = key.replace("_", "-")
+                if len(defaults) != 1:
+                    msg = (
+                        f"Status list for '{label}' must have exactly one default, "
+                        f"found {len(defaults)}"
+                    )
+                    raise ValueError(msg)
+        return self
+
+    def get_default(self, key: str) -> StatusMapping:
+        """Return the default StatusMapping for a logical state."""
+        attr = key.replace("-", "_")
+        value = getattr(self, attr, None)
+        if value is None:
+            msg = f"Unknown status key: '{key}'"
+            raise ValueError(msg)
+        if isinstance(value, StatusMapping):
+            return value
+        defaults = [m for m in value if m.default]
+        return defaults[0]
 
 
 class ProjectFields(BaseModel):
