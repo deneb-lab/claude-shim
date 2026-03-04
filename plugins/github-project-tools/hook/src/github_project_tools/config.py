@@ -24,7 +24,7 @@ class StatusField(BaseModel):
     @model_validator(mode="after")
     def _check_list_defaults(self) -> StatusField:
         for key in ("todo", "in_progress", "done"):
-            value = getattr(self, key)
+            value: StatusMapping | list[StatusMapping] = getattr(self, key)
             if isinstance(value, list):
                 defaults = [m for m in value if m.default]
                 label = key.replace("_", "-")

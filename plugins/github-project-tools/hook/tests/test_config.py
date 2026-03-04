@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from github_project_tools.config import StatusField, load_config
+from github_project_tools.config import StatusField, StatusMapping, load_config
 
 
 class TestGitHubProjectToolsConfig:
@@ -36,10 +36,13 @@ class TestGitHubProjectToolsConfig:
         assert result.fields.start_date == "PVTF_start"
         assert result.fields.end_date == "PVTF_end"
         assert result.fields.status.id == "PVTF_status"
+        assert isinstance(result.fields.status.todo, StatusMapping)
         assert result.fields.status.todo.name == "Todo"
         assert result.fields.status.todo.option_id == "PVTO_1"
+        assert isinstance(result.fields.status.in_progress, StatusMapping)
         assert result.fields.status.in_progress.name == "In Progress"
         assert result.fields.status.in_progress.option_id == "PVTO_2"
+        assert isinstance(result.fields.status.done, StatusMapping)
         assert result.fields.status.done.name == "Done"
         assert result.fields.status.done.option_id == "PVTO_3"
 
@@ -192,8 +195,11 @@ class TestGitHubProjectToolsConfig:
         result = load_config(tmp_path)
 
         assert result is not None
+        assert isinstance(result.fields.status.todo, StatusMapping)
         assert result.fields.status.todo.default is True
+        assert isinstance(result.fields.status.in_progress, StatusMapping)
         assert result.fields.status.in_progress.default is False
+        assert isinstance(result.fields.status.done, StatusMapping)
         assert result.fields.status.done.default is False
 
     def test_status_as_list_with_single_item(self, tmp_path: Path) -> None:
