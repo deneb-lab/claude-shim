@@ -162,3 +162,36 @@ class TestGitHubProjectToolsConfig:
 
         assert result is not None
         assert result.repo is None
+
+    def test_status_mapping_default_field(self, tmp_path: Path) -> None:
+        config_data = {
+            "github-project-tools": {
+                "project": "https://github.com/users/testowner/projects/1",
+                "fields": {
+                    "start-date": "PVTF_start",
+                    "end-date": "PVTF_end",
+                    "status": {
+                        "id": "PVTF_status",
+                        "todo": {
+                            "name": "Todo",
+                            "option-id": "PVTO_1",
+                            "default": True,
+                        },
+                        "in-progress": {
+                            "name": "In Progress",
+                            "option-id": "PVTO_2",
+                        },
+                        "done": {"name": "Done", "option-id": "PVTO_3"},
+                    },
+                },
+            }
+        }
+        config_file = tmp_path / ".claude-shim.json"
+        config_file.write_text(json.dumps(config_data))
+
+        result = load_config(tmp_path)
+
+        assert result is not None
+        assert result.fields.status.todo.default is True
+        assert result.fields.status.in_progress.default is False
+        assert result.fields.status.done.default is False

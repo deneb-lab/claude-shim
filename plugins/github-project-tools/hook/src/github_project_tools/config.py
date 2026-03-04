@@ -12,6 +12,7 @@ CONFIG_KEY = "github-project-tools"
 class StatusMapping(BaseModel):
     name: str
     option_id: str = Field(alias="option-id")
+    default: bool = False
 
 
 class StatusField(BaseModel):
