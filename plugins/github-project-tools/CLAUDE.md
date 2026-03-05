@@ -3,13 +3,13 @@
 ## Architecture
 
 - `hook/` — Python uv package (CLI + pydantic config models)
-- `skills/` — Four skills: `add-issue`, `start-implementation`, `end-implementation`, `setup-github-project-tools`
+- `skills/` — Five skills: `add-issue`, `start-implementation`, `end-implementation`, `mass-update`, `setup-github-project-tools`
 - Each skill has a `prompts/` directory with prompt files
 - Configuration stored in `.claude-shim.json` (per-repository)
 
 ## Shared Prompts
 
-`preflight.md` and `conventions.md` are duplicated across all 4 skills. `setup.md` is shared between `add-issue`, `start-implementation`, and `end-implementation`. `parse-issue-arg.md` is shared between `start-implementation` and `end-implementation`. When editing, update ALL copies and verify with `git diff`. CI enforces sync.
+`preflight.md` and `conventions.md` are duplicated across all 5 skills. `setup.md` is shared between `add-issue`, `start-implementation`, `end-implementation`, and `mass-update`. `parse-issue-arg.md` is shared between `start-implementation`, `end-implementation`, and `mass-update`. When editing, update ALL copies and verify with `git diff`. CI enforces sync.
 
 ## Development
 
