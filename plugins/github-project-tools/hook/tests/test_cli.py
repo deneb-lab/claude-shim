@@ -1139,6 +1139,61 @@ class TestListStatusOptions:
             main(["list-status-options"], cwd=tmp_path)
 
 
+class TestSetStatusByOptionId:
+    def test_sets_status_with_raw_option_id(self, tmp_path: Path) -> None:
+        make_config(tmp_path)
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="PVT_proj\n", stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout='{"data":{}}', stderr=""
+                ),
+            ]
+            exit_code = main(
+                [
+                    "--repo",
+                    "owner/repo",
+                    "set-status-by-option-id",
+                    "PVTI_item",
+                    "OPT_custom",
+                ],
+                cwd=tmp_path,
+            )
+        assert exit_code == 0
+        # Verify the raw option ID was used in the GraphQL call
+        graphql_call = mock_run.call_args_list[1]
+        call_str = " ".join(graphql_call[0][0])
+        assert "OPT_custom" in call_str
+
+    def test_uses_status_field_id_from_config(self, tmp_path: Path) -> None:
+        make_config(tmp_path)
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="PVT_proj\n", stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout='{"data":{}}', stderr=""
+                ),
+            ]
+            exit_code = main(
+                [
+                    "--repo",
+                    "owner/repo",
+                    "set-status-by-option-id",
+                    "PVTI_item",
+                    "OPT_1",
+                ],
+                cwd=tmp_path,
+            )
+        assert exit_code == 0
+        graphql_call = mock_run.call_args_list[1]
+        call_str = " ".join(graphql_call[0][0])
+        assert "PVTF_status" in call_str
+
+
 class TestIssueList:
     def test_passthrough_args(self, capsys: pytest.CaptureFixture[str]) -> None:
         json_output = '[{"number":1,"projectItems":[]}]'

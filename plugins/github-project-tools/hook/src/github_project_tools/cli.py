@@ -503,6 +503,31 @@ def cmd_list_status_options(config: GitHubProjectToolsConfig) -> int:
     return 0
 
 
+def cmd_set_status_by_option_id(
+    config: GitHubProjectToolsConfig,
+    item_id: str,
+    option_id: str,
+) -> int:
+    project_id = get_project_id(config)
+    field_id = config.fields.status.id
+    graphql(
+        """
+        mutation($project: ID!, $item: ID!, $field: ID!, $value: String!) {
+          updateProjectV2ItemFieldValue(input: {
+            projectId: $project, itemId: $item,
+            fieldId: $field, value: {singleSelectOptionId: $value}
+          }) { projectV2Item { id } }
+        }""",
+        {
+            "project": project_id,
+            "item": item_id,
+            "field": field_id,
+            "value": option_id,
+        },
+    )
+    return 0
+
+
 def cmd_set_date(
     config: GitHubProjectToolsConfig,
     item_id: str,
@@ -679,6 +704,7 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
         "set-status",
         "set-date",
         "list-status-options",
+        "set-status-by-option-id",
     }
     if subcmd in config_cmds:
         config = load_config_or_fail(working_dir)
@@ -698,6 +724,8 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
             return cmd_set_date(config, sub_args[0], sub_args[1], date_val)
         if subcmd == "list-status-options":
             return cmd_list_status_options(config)
+        if subcmd == "set-status-by-option-id":
+            return cmd_set_status_by_option_id(config, sub_args[0], sub_args[1])
 
     # Repo-only subcommands (no config needed)
     repo_only_cmds = {
