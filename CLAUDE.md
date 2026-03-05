@@ -48,7 +48,7 @@ CI runs on every push/PR (`.github/workflows/ci.yml`):
 - **Paths:** Reference scripts as `scripts/<name>.sh` (plugin-relative)
 - **Prompts:** Prompt files go in `prompts/` subdirectory **inside each skill directory** (next to SKILL.md), never at the plugin root. Claude Code resolves relative paths from the skill directory, not the plugin root.
 - **Shared prompts:** When multiple skills in a plugin use the same prompt file, each skill gets its own copy. When editing a shared prompt, **update every copy across all skills that use it.** Use `git diff` to verify all copies stay identical. Shared prompt groups:
-  - `github-project-tools`: `preflight.md` and `conventions.md` are shared by all 4 skills; `setup.md` is shared by `add-issue`, `start-implementation`, and `end-implementation`; `parse-issue-arg.md` is shared by `start-implementation` and `end-implementation`
+  - `github-project-tools`: `preflight.md` and `conventions.md` are shared by all 5 skills; `setup.md` is shared by `add-issue`, `start-implementation`, `end-implementation`, and `mass-update`; `parse-issue-arg.md` is shared by `start-implementation`, `end-implementation`, and `mass-update`
 
 ## Script Conventions
 
