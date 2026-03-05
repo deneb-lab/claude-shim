@@ -547,6 +547,26 @@ def cmd_count_open_sub_issues(node_id: str) -> int:
     return 0
 
 
+def cmd_list_sub_issues(node_id: str) -> int:
+    result = graphql(
+        """
+        query($id: ID!) {
+          node(id: $id) {
+            ... on Issue {
+              subIssues(first: 50) {
+                nodes { id number title state }
+              }
+            }
+          }
+        }""",
+        {"id": node_id},
+        jq_filter="[.data.node.subIssues.nodes[] | {id, number, title, state}]",
+    )
+    if result.stdout:
+        print(result.stdout, end="")
+    return 0
+
+
 def cmd_set_parent(child_id: str, parent_id: str) -> int:
     result = graphql(
         """
@@ -661,6 +681,7 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
     repo_only_cmds = {
         "get-parent",
         "count-open-sub-issues",
+        "list-sub-issues",
         "set-parent",
     }
     if subcmd in repo_only_cmds:
@@ -668,6 +689,8 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
             return cmd_get_parent(sub_args[0])
         if subcmd == "count-open-sub-issues":
             return cmd_count_open_sub_issues(sub_args[0])
+        if subcmd == "list-sub-issues":
+            return cmd_list_sub_issues(sub_args[0])
         if subcmd == "set-parent":
             return cmd_set_parent(sub_args[0], sub_args[1])
 

@@ -1055,6 +1055,50 @@ class TestGetStatusChangeDate:
         assert out == "null"
 
 
+class TestListSubIssues:
+    def test_returns_sub_issues(self, capsys: pytest.CaptureFixture[str]) -> None:
+        sub_issues_json = json.dumps(
+            [
+                {"id": "I_sub1", "number": 10, "title": "Sub 1", "state": "OPEN"},
+                {"id": "I_sub2", "number": 11, "title": "Sub 2", "state": "CLOSED"},
+            ]
+        )
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout=sub_issues_json + "\n", stderr=""
+            )
+            exit_code = main(["--repo", "owner/repo", "list-sub-issues", "I_parent"])
+        assert exit_code == 0
+        out = json.loads(capsys.readouterr().out)
+        assert len(out) == 2
+        assert out[0]["id"] == "I_sub1"
+        assert out[1]["state"] == "CLOSED"
+
+    def test_returns_empty_array_when_no_sub_issues(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="[]\n", stderr=""
+            )
+            exit_code = main(["--repo", "owner/repo", "list-sub-issues", "I_parent"])
+        assert exit_code == 0
+        out = json.loads(capsys.readouterr().out)
+        assert out == []
+
+    def test_uses_correct_jq_filter(self) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="[]\n", stderr=""
+            )
+            main(["--repo", "owner/repo", "list-sub-issues", "I_parent"])
+        call_args = mock_run.call_args[0][0]
+        assert "--jq" in call_args
+        jq_idx = call_args.index("--jq")
+        jq_filter = call_args[jq_idx + 1]
+        assert "subIssues" in jq_filter
+
+
 class TestIssueList:
     def test_passthrough_args(self, capsys: pytest.CaptureFixture[str]) -> None:
         json_output = '[{"number":1,"projectItems":[]}]'
