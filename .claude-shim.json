@@ -54,9 +54,9 @@
       "end-date": "PVTF_lAHOAC8LI84BPPkbzg9teuo",
       "status": {
         "id": "PVTSSF_lAHOAC8LI84BPPkbzg9tWIc",
-        "todo": { "name": "Todo", "option-id": "f75ad846" },
-        "in-progress": { "name": "In Progress", "option-id": "47fc9ee4" },
-        "done": { "name": "Done", "option-id": "98236657" }
+        "todo": [{ "name": "Todo", "option-id": "f75ad846", "default": true }],
+        "in-progress": [{ "name": "In Progress", "option-id": "47fc9ee4", "default": true }],
+        "done": [{ "name": "Done", "option-id": "98236657", "default": true }]
       }
     }
   }
