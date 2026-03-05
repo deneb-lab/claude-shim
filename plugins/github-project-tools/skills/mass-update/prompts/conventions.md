@@ -1,0 +1,6 @@
+- **CLI invocation:** The `<cli>` prefix (see preflight) MUST be the literal resolved path to `github-project-tools.sh` as the first token of every bash command — e.g. `<cli> issue-assign 14`. NEVER split the path into a variable. Claude Code matches permissions by the first token; variable-wrapped paths produce a different fingerprint every time, forcing repeated approval prompts.
+- **No command substitution** in bash commands — never use `$(...)`. If logic is needed, add it to the CLI. Pass multi-line content inline via `--body` or `--comment`.
+- **JSON processing:** Extract values from command output in-context. Do not use separate `echo | jq` bash commands.
+- **All GitHub operations** go through `<cli>` — never call `gh` directly.
+- **Date field IDs** come from the config (read during setup). They may change if the project is recreated — re-run the setup skill to refresh.
+- **Project is optional.** If no config is found during setup and the user declines to configure, skip all project operations (get-project-item, add-to-project, set-date, set-status) but still perform issue operations (assign, view, close, parent check).

@@ -1055,6 +1055,145 @@ class TestGetStatusChangeDate:
         assert out == "null"
 
 
+class TestListSubIssues:
+    def test_returns_sub_issues(self, capsys: pytest.CaptureFixture[str]) -> None:
+        sub_issues_json = json.dumps(
+            [
+                {"id": "I_sub1", "number": 10, "title": "Sub 1", "state": "OPEN"},
+                {"id": "I_sub2", "number": 11, "title": "Sub 2", "state": "CLOSED"},
+            ]
+        )
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout=sub_issues_json + "\n", stderr=""
+            )
+            exit_code = main(["--repo", "owner/repo", "list-sub-issues", "I_parent"])
+        assert exit_code == 0
+        out = json.loads(capsys.readouterr().out)
+        assert len(out) == 2
+        assert out[0]["id"] == "I_sub1"
+        assert out[1]["state"] == "CLOSED"
+
+    def test_returns_empty_array_when_no_sub_issues(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="[]\n", stderr=""
+            )
+            exit_code = main(["--repo", "owner/repo", "list-sub-issues", "I_parent"])
+        assert exit_code == 0
+        out = json.loads(capsys.readouterr().out)
+        assert out == []
+
+    def test_uses_correct_jq_filter(self) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="[]\n", stderr=""
+            )
+            main(["--repo", "owner/repo", "list-sub-issues", "I_parent"])
+        call_args = mock_run.call_args[0][0]
+        assert "--jq" in call_args
+        jq_idx = call_args.index("--jq")
+        jq_filter = call_args[jq_idx + 1]
+        assert "subIssues" in jq_filter
+
+
+class TestListStatusOptions:
+    def test_returns_status_options(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        make_config(tmp_path)
+        options_json = json.dumps(
+            [
+                {"id": "OPT_1", "name": "Todo"},
+                {"id": "OPT_2", "name": "In Progress"},
+                {"id": "OPT_3", "name": "Done"},
+                {"id": "OPT_4", "name": "Blocked"},
+            ]
+        )
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout=options_json + "\n", stderr=""
+            )
+            exit_code = main(["list-status-options"], cwd=tmp_path)
+        assert exit_code == 0
+        out = json.loads(capsys.readouterr().out)
+        assert len(out) == 4
+        assert out[3]["name"] == "Blocked"
+
+    def test_queries_status_field_id_from_config(self, tmp_path: Path) -> None:
+        make_config(tmp_path)
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="[]\n", stderr=""
+            )
+            main(["list-status-options"], cwd=tmp_path)
+        call_args = mock_run.call_args[0][0]
+        call_str = " ".join(call_args)
+        # Should use the status field ID from config
+        assert "PVTF_status" in call_str
+
+    def test_missing_config_exits_1(self, tmp_path: Path) -> None:
+        with pytest.raises(SystemExit, match="1"):
+            main(["list-status-options"], cwd=tmp_path)
+
+
+class TestSetStatusByOptionId:
+    def test_sets_status_with_raw_option_id(self, tmp_path: Path) -> None:
+        make_config(tmp_path)
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="PVT_proj\n", stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout='{"data":{}}', stderr=""
+                ),
+            ]
+            exit_code = main(
+                [
+                    "--repo",
+                    "owner/repo",
+                    "set-status-by-option-id",
+                    "PVTI_item",
+                    "OPT_custom",
+                ],
+                cwd=tmp_path,
+            )
+        assert exit_code == 0
+        # Verify the raw option ID was used in the GraphQL call
+        graphql_call = mock_run.call_args_list[1]
+        call_str = " ".join(graphql_call[0][0])
+        assert "OPT_custom" in call_str
+
+    def test_uses_status_field_id_from_config(self, tmp_path: Path) -> None:
+        make_config(tmp_path)
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="PVT_proj\n", stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout='{"data":{}}', stderr=""
+                ),
+            ]
+            exit_code = main(
+                [
+                    "--repo",
+                    "owner/repo",
+                    "set-status-by-option-id",
+                    "PVTI_item",
+                    "OPT_1",
+                ],
+                cwd=tmp_path,
+            )
+        assert exit_code == 0
+        graphql_call = mock_run.call_args_list[1]
+        call_str = " ".join(graphql_call[0][0])
+        assert "PVTF_status" in call_str
+
+
 class TestIssueList:
     def test_passthrough_args(self, capsys: pytest.CaptureFixture[str]) -> None:
         json_output = '[{"number":1,"projectItems":[]}]'

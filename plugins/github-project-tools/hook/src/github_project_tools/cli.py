@@ -484,6 +484,50 @@ def cmd_set_status(
     return 0
 
 
+def cmd_list_status_options(config: GitHubProjectToolsConfig) -> int:
+    field_id = config.fields.status.id
+    result = graphql(
+        """
+        query($id: ID!) {
+          node(id: $id) {
+            ... on ProjectV2SingleSelectField {
+              options { id name }
+            }
+          }
+        }""",
+        {"id": field_id},
+        jq_filter="[.data.node.options[] | {id, name}]",
+    )
+    if result.stdout:
+        print(result.stdout, end="")
+    return 0
+
+
+def cmd_set_status_by_option_id(
+    config: GitHubProjectToolsConfig,
+    item_id: str,
+    option_id: str,
+) -> int:
+    project_id = get_project_id(config)
+    field_id = config.fields.status.id
+    graphql(
+        """
+        mutation($project: ID!, $item: ID!, $field: ID!, $value: String!) {
+          updateProjectV2ItemFieldValue(input: {
+            projectId: $project, itemId: $item,
+            fieldId: $field, value: {singleSelectOptionId: $value}
+          }) { projectV2Item { id } }
+        }""",
+        {
+            "project": project_id,
+            "item": item_id,
+            "field": field_id,
+            "value": option_id,
+        },
+    )
+    return 0
+
+
 def cmd_set_date(
     config: GitHubProjectToolsConfig,
     item_id: str,
@@ -541,6 +585,26 @@ def cmd_count_open_sub_issues(node_id: str) -> int:
         }""",
         {"id": node_id},
         jq_filter='[.data.node.subIssues.nodes[] | select(.state == "OPEN")] | length',
+    )
+    if result.stdout:
+        print(result.stdout, end="")
+    return 0
+
+
+def cmd_list_sub_issues(node_id: str) -> int:
+    result = graphql(
+        """
+        query($id: ID!) {
+          node(id: $id) {
+            ... on Issue {
+              subIssues(first: 50) {
+                nodes { id number title state }
+              }
+            }
+          }
+        }""",
+        {"id": node_id},
+        jq_filter="[.data.node.subIssues.nodes[] | {id, number, title, state}]",
     )
     if result.stdout:
         print(result.stdout, end="")
@@ -639,6 +703,8 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
         "add-to-project",
         "set-status",
         "set-date",
+        "list-status-options",
+        "set-status-by-option-id",
     }
     if subcmd in config_cmds:
         config = load_config_or_fail(working_dir)
@@ -656,11 +722,16 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
         if subcmd == "set-date":
             date_val = sub_args[2] if len(sub_args) > 2 else None
             return cmd_set_date(config, sub_args[0], sub_args[1], date_val)
+        if subcmd == "list-status-options":
+            return cmd_list_status_options(config)
+        if subcmd == "set-status-by-option-id":
+            return cmd_set_status_by_option_id(config, sub_args[0], sub_args[1])
 
     # Repo-only subcommands (no config needed)
     repo_only_cmds = {
         "get-parent",
         "count-open-sub-issues",
+        "list-sub-issues",
         "set-parent",
     }
     if subcmd in repo_only_cmds:
@@ -668,6 +739,8 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
             return cmd_get_parent(sub_args[0])
         if subcmd == "count-open-sub-issues":
             return cmd_count_open_sub_issues(sub_args[0])
+        if subcmd == "list-sub-issues":
+            return cmd_list_sub_issues(sub_args[0])
         if subcmd == "set-parent":
             return cmd_set_parent(sub_args[0], sub_args[1])
 
