@@ -1,5 +1,5 @@
 ---
-name: start-implementation
+name: start-implementing-issue
 description: Start implementing a GitHub issue - assigns, sets dates/status, and presents issue context
 allowed-tools: Bash(*/github-project-tools/scripts/github-project-tools.sh preflight), Bash(*/github-project-tools/scripts/github-project-tools.sh read-config), Bash(*/github-project-tools/scripts/github-project-tools.sh repo-detect), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-view-full *), Bash(*/github-project-tools/scripts/github-project-tools.sh get-parent *), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-assign *), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-get-assignees *), Bash(*/github-project-tools/scripts/github-project-tools.sh get-project-item *), Bash(*/github-project-tools/scripts/github-project-tools.sh add-to-project *), Bash(*/github-project-tools/scripts/github-project-tools.sh set-date *), Bash(*/github-project-tools/scripts/github-project-tools.sh set-status *), Bash(*/github-project-tools/scripts/github-project-tools.sh get-start-date *), Bash(git rev-parse *), Bash(git checkout *), Bash(git worktree *)
 ---
@@ -167,11 +167,11 @@ If no additional instructions were provided, proceed with implementation based o
 
 When the user indicates they are done (or you have completed the implementation), ask:
 
-**"Implementation complete. Run end-implementation to close the issue?"**
+**"Implementation complete. Run end-implementing-issue to close the issue?"**
 
-- **If yes:** Invoke `github-project-tools:end-implementation` via the Skill tool. State (NODE_ID, ITEM_ID, field IDs, parent info) will carry through in the conversation context.
+- **If yes:** Invoke `github-project-tools:end-implementing-issue` via the Skill tool. State (NODE_ID, ITEM_ID, field IDs, parent info) will carry through in the conversation context.
 
-- **If no:** Tell the user they can run `/github-project-tools:end-implementation` later to close the issue and update the project board.
+- **If no:** Tell the user they can run `/github-project-tools:end-implementing-issue` later to close the issue and update the project board.
 
 - **If the implementation cannot be completed:** Present the user with two options:
   - **Option A: Do nothing** — Leave the issue assigned, dates set, and status as in-progress. The user can continue later.

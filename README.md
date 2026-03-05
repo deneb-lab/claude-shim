@@ -69,8 +69,8 @@ The plugin auto-detects the current GitHub repository and project board.
 | Skill | Description |
 |---|---|
 | `github-project-tools:add-issue` | Create a GitHub issue from conversation context and add it to the project board |
-| `github-project-tools:start-implementation` | Start implementing a GitHub issue — assigns, sets dates/status, and presents issue context |
-| `github-project-tools:end-implementation` | Close a GitHub issue — sets end date, done status, closes issue, updates parent lifecycle |
+| `github-project-tools:start-implementing-issue` | Start implementing a GitHub issue — assigns, sets dates/status, and presents issue context |
+| `github-project-tools:end-implementing-issue` | Close a GitHub issue — sets end date, done status, closes issue, updates parent lifecycle |
 
 ## License
 

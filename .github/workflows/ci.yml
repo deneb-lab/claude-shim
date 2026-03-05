@@ -26,8 +26,8 @@ jobs:
           failed=0
 
           for file in preflight.md conventions.md; do
-            for skill in start-implementation \
-                        end-implementation \
+            for skill in start-implementing-issue \
+                        end-implementing-issue \
                         setup-github-project-tools; do
               a="$base/add-issue/prompts/$file"
               b="$base/$skill/prompts/$file"
@@ -39,8 +39,8 @@ jobs:
           done
 
           for file in setup.md; do
-            for skill in end-implementation add-issue; do
-              a="$base/start-implementation/prompts/$file"
+            for skill in end-implementing-issue add-issue; do
+              a="$base/start-implementing-issue/prompts/$file"
               b="$base/$skill/prompts/$file"
               if ! diff -q "$a" "$b" > /dev/null 2>&1; then
                 echo "MISMATCH: $file differs"
@@ -50,8 +50,8 @@ jobs:
           done
 
           for file in parse-issue-arg.md; do
-            a="$base/start-implementation/prompts/$file"
-            b="$base/end-implementation/prompts/$file"
+            a="$base/start-implementing-issue/prompts/$file"
+            b="$base/end-implementing-issue/prompts/$file"
             if ! diff -q "$a" "$b" > /dev/null 2>&1; then
               echo "MISMATCH: $file differs"
               failed=1

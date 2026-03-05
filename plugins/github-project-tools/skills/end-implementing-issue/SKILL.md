@@ -1,5 +1,5 @@
 ---
-name: end-implementation
+name: end-implementing-issue
 description: Close a GitHub issue - sets end date, done status, closes issue, updates parent lifecycle
 allowed-tools: Bash(*/github-project-tools/scripts/github-project-tools.sh preflight), Bash(*/github-project-tools/scripts/github-project-tools.sh read-config), Bash(*/github-project-tools/scripts/github-project-tools.sh repo-detect), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-view-full *), Bash(*/github-project-tools/scripts/github-project-tools.sh get-parent *), Bash(*/github-project-tools/scripts/github-project-tools.sh get-project-item *), Bash(*/github-project-tools/scripts/github-project-tools.sh set-date *), Bash(*/github-project-tools/scripts/github-project-tools.sh set-status *), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-close *), Bash(*/github-project-tools/scripts/github-project-tools.sh count-open-sub-issues *), Bash(*/github-project-tools/scripts/github-project-tools.sh get-start-date *), Bash(*/github-project-tools/scripts/github-project-tools.sh get-status-change-date *), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-get-assignees *), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-assign *), Bash(git rev-parse *), Bash(git log *)
 ---
@@ -9,10 +9,10 @@ allowed-tools: Bash(*/github-project-tools/scripts/github-project-tools.sh prefl
 Close out a GitHub issue after implementation is complete: set the end date and done status on the project board, close the issue, and update the parent issue lifecycle if all sub-issues are resolved.
 
 This skill works in two modes:
-- **Handoff from start-implementation:** State (NODE_ID, ITEM_ID, field IDs, parent info, and REPO_OVERRIDE if set) is already in the conversation context. Phases 1 and 2 are skipped.
+- **Handoff from start-implementing-issue:** State (NODE_ID, ITEM_ID, field IDs, parent info, and REPO_OVERRIDE if set) is already in the conversation context. Phases 1 and 2 are skipped.
 - **Standalone invocation:** The user calls this skill directly. All state must be discovered from scratch.
 
-When `REPO_OVERRIDE` is set (either from start-implementation handoff or parsed from a URL in Phase 2), **prepend `--repo $REPO_OVERRIDE` before the subcommand in every script invocation** to override auto-detection.
+When `REPO_OVERRIDE` is set (either from start-implementing-issue handoff or parsed from a URL in Phase 2), **prepend `--repo $REPO_OVERRIDE` before the subcommand in every script invocation** to override auto-detection.
 
 ## Phase 0: Preflight
 
@@ -22,13 +22,13 @@ All CLI commands below use `<cli>` to mean the invocation pattern established du
 
 ## Phase 1: Setup (conditional)
 
-**If state from `start-implementation` is already in the conversation context** (NODE_ID, ITEM_ID, field IDs, and parent info are known), **skip to Phase 2.3.**
+**If state from `start-implementing-issue` is already in the conversation context** (NODE_ID, ITEM_ID, field IDs, and parent info are known), **skip to Phase 2.3.**
 
 Otherwise, follow the steps in [prompts/setup.md](prompts/setup.md).
 
 ## Phase 2: Fetch Issue (conditional)
 
-**If state from `start-implementation` is already in the conversation context**, **skip to Phase 2.3.**
+**If state from `start-implementing-issue` is already in the conversation context**, **skip to Phase 2.3.**
 
 Otherwise:
 
@@ -102,7 +102,7 @@ Generate an optional closing comment summarizing what was implemented. This prov
 
    - **Check git state:** Run `git rev-parse --abbrev-ref HEAD` to get the current branch. If the branch is not `main` (or the default branch), there may be relevant commits.
    - **If on a non-main branch:** Run `git log main..HEAD --oneline` to get the commit list. Cross-check these commits against the issue title and body to determine relevance. If unsure whether the commits relate to this issue, ask the user.
-   - **Conversation context:** If this is a handoff from `start-implementation` (implementation work was done in this session), also use the conversation context — what was discussed, built, and changed.
+   - **Conversation context:** If this is a handoff from `start-implementing-issue` (implementation work was done in this session), also use the conversation context — what was discussed, built, and changed.
 
 2. **Generate a summary** using the available context (conversation + git log):
 

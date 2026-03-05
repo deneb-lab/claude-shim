@@ -1,5 +1,5 @@
 ---
-name: mass-update
+name: mass-update-issues
 description: Update an issue and all its sub-issues - sets status, dates, and close state on the project board
 allowed-tools: Bash(*/github-project-tools/scripts/github-project-tools.sh preflight), Bash(*/github-project-tools/scripts/github-project-tools.sh read-config), Bash(*/github-project-tools/scripts/github-project-tools.sh repo-detect), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-view-full *), Bash(*/github-project-tools/scripts/github-project-tools.sh list-sub-issues *), Bash(*/github-project-tools/scripts/github-project-tools.sh list-status-options *), Bash(*/github-project-tools/scripts/github-project-tools.sh get-project-item *), Bash(*/github-project-tools/scripts/github-project-tools.sh add-to-project *), Bash(*/github-project-tools/scripts/github-project-tools.sh set-status-by-option-id *), Bash(*/github-project-tools/scripts/github-project-tools.sh set-status *), Bash(*/github-project-tools/scripts/github-project-tools.sh set-date *), Bash(*/github-project-tools/scripts/github-project-tools.sh get-start-date *), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-close *), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-get-assignees *), Bash(*/github-project-tools/scripts/github-project-tools.sh issue-assign *)
 ---
@@ -188,4 +188,4 @@ Additional conventions for this skill:
 - **Explicit confirmation is mandatory** for Phases 3, 4, and 5. Never auto-proceed. Always use AskUserQuestion.
 - **Sub-issues first, then parent.** This prevents the parent from being in a misleading state if something fails mid-way.
 - **Never overwrite existing dates.** Check before setting.
-- **Project is required** for this skill. If no project config is available during setup, tell the user: "mass-update requires a configured project board. Run setup first." and stop.
+- **Project is required** for this skill. If no project config is available during setup, tell the user: "mass-update-issues requires a configured project board. Run setup first." and stop.
