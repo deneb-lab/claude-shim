@@ -1099,6 +1099,46 @@ class TestListSubIssues:
         assert "subIssues" in jq_filter
 
 
+class TestListStatusOptions:
+    def test_returns_status_options(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        make_config(tmp_path)
+        options_json = json.dumps(
+            [
+                {"id": "OPT_1", "name": "Todo"},
+                {"id": "OPT_2", "name": "In Progress"},
+                {"id": "OPT_3", "name": "Done"},
+                {"id": "OPT_4", "name": "Blocked"},
+            ]
+        )
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout=options_json + "\n", stderr=""
+            )
+            exit_code = main(["list-status-options"], cwd=tmp_path)
+        assert exit_code == 0
+        out = json.loads(capsys.readouterr().out)
+        assert len(out) == 4
+        assert out[3]["name"] == "Blocked"
+
+    def test_queries_status_field_id_from_config(self, tmp_path: Path) -> None:
+        make_config(tmp_path)
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="[]\n", stderr=""
+            )
+            main(["list-status-options"], cwd=tmp_path)
+        call_args = mock_run.call_args[0][0]
+        call_str = " ".join(call_args)
+        # Should use the status field ID from config
+        assert "PVTF_status" in call_str
+
+    def test_missing_config_exits_1(self, tmp_path: Path) -> None:
+        with pytest.raises(SystemExit, match="1"):
+            main(["list-status-options"], cwd=tmp_path)
+
+
 class TestIssueList:
     def test_passthrough_args(self, capsys: pytest.CaptureFixture[str]) -> None:
         json_output = '[{"number":1,"projectItems":[]}]'

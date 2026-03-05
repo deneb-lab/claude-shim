@@ -484,6 +484,25 @@ def cmd_set_status(
     return 0
 
 
+def cmd_list_status_options(config: GitHubProjectToolsConfig) -> int:
+    field_id = config.fields.status.id
+    result = graphql(
+        """
+        query($id: ID!) {
+          node(id: $id) {
+            ... on ProjectV2SingleSelectField {
+              options { id name }
+            }
+          }
+        }""",
+        {"id": field_id},
+        jq_filter="[.data.node.options[] | {id, name}]",
+    )
+    if result.stdout:
+        print(result.stdout, end="")
+    return 0
+
+
 def cmd_set_date(
     config: GitHubProjectToolsConfig,
     item_id: str,
@@ -659,6 +678,7 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
         "add-to-project",
         "set-status",
         "set-date",
+        "list-status-options",
     }
     if subcmd in config_cmds:
         config = load_config_or_fail(working_dir)
@@ -676,6 +696,8 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
         if subcmd == "set-date":
             date_val = sub_args[2] if len(sub_args) > 2 else None
             return cmd_set_date(config, sub_args[0], sub_args[1], date_val)
+        if subcmd == "list-status-options":
+            return cmd_list_status_options(config)
 
     # Repo-only subcommands (no config needed)
     repo_only_cmds = {
