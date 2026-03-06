@@ -594,6 +594,25 @@ def cmd_set_date(
 # --- Repo-only subcommands ---
 
 
+def cmd_list_issue_types(repo: str) -> int:
+    owner, name = repo.split("/", 1)
+    result = graphql(
+        """
+        query($owner: String!, $name: String!) {
+          repository(owner: $owner, name: $name) {
+            issueTypes(first: 50) { nodes { id name description } }
+          }
+        }""",
+        {"owner": owner, "name": name},
+        jq_filter="[.data.repository.issueTypes.nodes[] | {id, name, description}]",
+    )
+    if (rc := check_result(result, "list-issue-types")) is not None:
+        return rc
+    if result.stdout:
+        print(result.stdout, end="")
+    return 0
+
+
 def cmd_get_parent(node_id: str) -> int:
     result = graphql(
         """
@@ -672,6 +691,24 @@ def cmd_set_parent(child_id: str, parent_id: str) -> int:
     return 0
 
 
+def cmd_set_issue_type(node_id: str, type_id: str) -> int:
+    result = graphql(
+        """
+        mutation($id: ID!, $typeId: ID!) {
+          updateIssue(input: { id: $id, issueTypeId: $typeId }) {
+            issue { issueType { id name } }
+          }
+        }""",
+        {"id": node_id, "typeId": type_id},
+        jq_filter=".data.updateIssue.issue.issueType.name",
+    )
+    if (rc := check_result(result, "set-issue-type")) is not None:
+        return rc
+    if result.stdout:
+        print(result.stdout, end="")
+    return 0
+
+
 # --- Main dispatch ---
 
 
@@ -721,6 +758,7 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
         "issue-assign",
         "issue-get-assignees",
         "issue-list",
+        "list-issue-types",
     }
     if subcmd in issue_cmds:
         resolved_repo = detect_repo(repo)
@@ -739,6 +777,8 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
             return cmd_issue_get_assignees(resolved_repo, sub_args[0])
         if subcmd == "issue-list":
             return cmd_issue_list(resolved_repo, sub_args)
+        if subcmd == "list-issue-types":
+            return cmd_list_issue_types(resolved_repo)
 
     # Config-driven project board subcommands
     config_cmds = {
@@ -778,6 +818,7 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
         "count-open-sub-issues",
         "list-sub-issues",
         "set-parent",
+        "set-issue-type",
     }
     if subcmd in repo_only_cmds:
         if subcmd == "get-parent":
@@ -788,6 +829,8 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
             return cmd_list_sub_issues(sub_args[0])
         if subcmd == "set-parent":
             return cmd_set_parent(sub_args[0], sub_args[1])
+        if subcmd == "set-issue-type":
+            return cmd_set_issue_type(sub_args[0], sub_args[1])
 
     print(f"Unknown subcommand: {subcmd}", file=sys.stderr)
     return 1
