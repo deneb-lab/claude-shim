@@ -254,14 +254,36 @@ class TestIssueCreate:
         assert "--body" in call_args
         assert "My Body" in call_args
 
-    def test_create_with_label(self, capsys: pytest.CaptureFixture[str]) -> None:
+    def test_create_gh_failure_propagates_error(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
         with patch("github_project_tools.cli.run_gh") as mock_run:
             mock_run.return_value = subprocess.CompletedProcess(
                 args=[],
-                returncode=0,
-                stdout="https://github.com/owner/repo/issues/99\n",
-                stderr="",
+                returncode=1,
+                stdout="",
+                stderr="label 'task' not found",
             )
+            exit_code = main(
+                [
+                    "--repo",
+                    "owner/repo",
+                    "issue-create",
+                    "--title",
+                    "T",
+                    "--body",
+                    "B",
+                ]
+            )
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "issue-create" in err
+        assert "label 'task' not found" in err
+
+    def test_create_rejects_label_flag(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh"):
             exit_code = main(
                 [
                     "--repo",
@@ -275,10 +297,8 @@ class TestIssueCreate:
                     "bug",
                 ]
             )
-        assert exit_code == 0
-        call_args = mock_run.call_args[0][0]
-        assert "--label" in call_args
-        assert "bug" in call_args
+        assert exit_code == 1
+        assert "unknown arg" in capsys.readouterr().err.lower()
 
     def test_create_missing_title_exits_1(
         self, capsys: pytest.CaptureFixture[str]
@@ -1223,3 +1243,148 @@ class TestIssueList:
         assert "--json" in call_args
         assert "number,projectItems" in call_args
         assert json_output in capsys.readouterr().out
+
+
+class TestCheckResult:
+    def test_returns_none_on_success(self) -> None:
+        from github_project_tools.cli import check_result
+
+        result = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout="ok\n", stderr=""
+        )
+        assert check_result(result, "test-cmd") is None
+
+    def test_returns_exit_code_on_failure(self) -> None:
+        from github_project_tools.cli import check_result
+
+        result = subprocess.CompletedProcess(
+            args=[], returncode=2, stdout="", stderr="something broke"
+        )
+        assert check_result(result, "test-cmd") == 2
+
+    def test_prints_stderr_with_label(self, capsys: pytest.CaptureFixture[str]) -> None:
+        from github_project_tools.cli import check_result
+
+        result = subprocess.CompletedProcess(
+            args=[], returncode=1, stdout="", stderr="label 'task' not found"
+        )
+        check_result(result, "issue-create")
+        err = capsys.readouterr().err
+        assert "issue-create" in err
+        assert "label 'task' not found" in err
+
+    def test_prints_generic_message_when_no_stderr(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        from github_project_tools.cli import check_result
+
+        result = subprocess.CompletedProcess(
+            args=[], returncode=1, stdout="", stderr=""
+        )
+        check_result(result, "set-status")
+        err = capsys.readouterr().err
+        assert "set-status" in err
+        assert "command failed" in err
+
+
+class TestRunGhErrorPropagation:
+    """Verify run_gh-based commands propagate errors."""
+
+    def test_issue_view_propagates_error(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=1, stdout="", stderr="issue not found"
+            )
+            exit_code = main(
+                ["--repo", "owner/repo", "issue-view", "999", "--json", "id"]
+            )
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "issue-view" in err
+        assert "issue not found" in err
+
+    def test_issue_assign_propagates_error(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=1, stdout="", stderr="permission denied"
+            )
+            exit_code = main(["--repo", "owner/repo", "issue-assign", "42"])
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "issue-assign" in err
+
+    def test_project_list_propagates_error(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=1, stdout="", stderr="not found"
+            )
+            exit_code = main(["project-list", "--owner", "nobody"])
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "project-list" in err
+
+
+class TestGraphqlErrorPropagation:
+    """Verify graphql-based commands propagate errors."""
+
+    def test_set_status_propagates_error(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        make_config(tmp_path)
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="PVT_proj\n", stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[], returncode=1, stdout="", stderr="GraphQL error"
+                ),
+            ]
+            exit_code = main(
+                ["--repo", "owner/repo", "set-status", "PVTI_item", "done"],
+                cwd=tmp_path,
+            )
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "set-status" in err
+
+    def test_add_to_project_propagates_error(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        make_config(tmp_path)
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="PVT_proj\n", stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[], returncode=1, stdout="", stderr="mutation failed"
+                ),
+            ]
+            exit_code = main(
+                ["--repo", "owner/repo", "add-to-project", "I_node"],
+                cwd=tmp_path,
+            )
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "add-to-project" in err
+
+    def test_set_parent_propagates_error(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=1, stdout="", stderr="not found"
+            )
+            exit_code = main(
+                ["--repo", "owner/repo", "set-parent", "I_child", "I_parent"]
+            )
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "set-parent" in err

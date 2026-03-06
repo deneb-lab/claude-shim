@@ -9,6 +9,16 @@ from pathlib import Path
 from github_project_tools.config import GitHubProjectToolsConfig, load_config
 
 
+def check_result(result: subprocess.CompletedProcess[str], label: str) -> int | None:
+    """Check a subprocess result, print stderr on failure, return exit code or None."""
+    if result.returncode != 0:
+        stderr = result.stderr.strip() if result.stderr else ""
+        msg = f"{label}: {stderr}" if stderr else f"{label}: command failed"
+        print(msg, file=sys.stderr)
+        return result.returncode
+    return None
+
+
 def run_gh(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         ["gh", *args],
@@ -165,6 +175,8 @@ def cmd_project_list(args: list[str]) -> int:
         print("project-list: --owner required", file=sys.stderr)
         return 1
     result = run_gh(["project", "list", "--owner", owner, "--format", "json"])
+    if (rc := check_result(result, "project-list")) is not None:
+        return rc
     if result.stdout:
         print(result.stdout, end="")
     return 0
@@ -198,6 +210,8 @@ def cmd_project_field_list(args: list[str]) -> int:
     result = run_gh(
         ["project", "field-list", number, "--owner", owner, "--format", "json"]
     )
+    if (rc := check_result(result, "project-field-list")) is not None:
+        return rc
     if result.stdout:
         print(result.stdout, end="")
     return 0
@@ -208,6 +222,8 @@ def cmd_project_field_list(args: list[str]) -> int:
 
 def cmd_issue_view(repo: str, number: str, extra_args: list[str]) -> int:
     result = run_gh(["issue", "view", number, "--repo", repo, *extra_args])
+    if (rc := check_result(result, "issue-view")) is not None:
+        return rc
     if result.stdout:
         print(result.stdout, end="")
     return 0
@@ -225,6 +241,8 @@ def cmd_issue_view_full(repo: str, number: str) -> int:
             "id,number,title,body,state",
         ]
     )
+    if (rc := check_result(result, "issue-view-full")) is not None:
+        return rc
     if result.stdout:
         print(result.stdout, end="")
     return 0
@@ -233,7 +251,6 @@ def cmd_issue_view_full(repo: str, number: str) -> int:
 def cmd_issue_create(repo: str, args: list[str]) -> int:
     title = ""
     body = ""
-    label = ""
     i = 0
     while i < len(args):
         if args[i] == "--title":
@@ -241,9 +258,6 @@ def cmd_issue_create(repo: str, args: list[str]) -> int:
             i += 2
         elif args[i] == "--body":
             body = args[i + 1]
-            i += 2
-        elif args[i] == "--label":
-            label = args[i + 1]
             i += 2
         else:
             print(f"issue-create: unknown arg: {args[i]}", file=sys.stderr)
@@ -254,10 +268,11 @@ def cmd_issue_create(repo: str, args: list[str]) -> int:
     if not body:
         print("issue-create: --body required", file=sys.stderr)
         return 1
-    cmd = ["issue", "create", "--repo", repo, "--title", title, "--body", body]
-    if label:
-        cmd.extend(["--label", label])
-    result = run_gh(cmd)
+    result = run_gh(
+        ["issue", "create", "--repo", repo, "--title", title, "--body", body]
+    )
+    if (rc := check_result(result, "issue-create")) is not None:
+        return rc
     if result.stdout:
         print(result.stdout, end="")
     return 0
@@ -305,6 +320,8 @@ def cmd_issue_close(repo: str, number: str, args: list[str]) -> int:
 
 def cmd_issue_assign(repo: str, number: str) -> int:
     result = run_gh(["issue", "edit", number, "--repo", repo, "--add-assignee", "@me"])
+    if (rc := check_result(result, "issue-assign")) is not None:
+        return rc
     if result.stdout:
         print(result.stdout, end="")
     return 0
@@ -324,6 +341,8 @@ def cmd_issue_get_assignees(repo: str, number: str) -> int:
             "[.assignees[].login]",
         ]
     )
+    if (rc := check_result(result, "issue-get-assignees")) is not None:
+        return rc
     if result.stdout:
         print(result.stdout, end="")
     return 0
@@ -331,6 +350,8 @@ def cmd_issue_get_assignees(repo: str, number: str) -> int:
 
 def cmd_issue_list(repo: str, extra_args: list[str]) -> int:
     result = run_gh(["issue", "list", "--repo", repo, *extra_args])
+    if (rc := check_result(result, "issue-list")) is not None:
+        return rc
     if result.stdout:
         print(result.stdout, end="")
     return 0
@@ -355,6 +376,8 @@ def cmd_get_project_item(config: GitHubProjectToolsConfig, node_id: str) -> int:
             f'.data.node.projectItems.nodes[] | select(.project.id == "{project_id}") | .id'
         ),
     )
+    if (rc := check_result(result, "get-project-item")) is not None:
+        return rc
     if result.stdout:
         print(result.stdout, end="")
     return 0
@@ -392,6 +415,8 @@ def cmd_get_start_date(config: GitHubProjectToolsConfig, node_id: str) -> int:
             f' | select(.field.id == "{start_field_id}") | .date] | first // null)}}'
         ),
     )
+    if (rc := check_result(result, "get-start-date")) is not None:
+        return rc
     if result.stdout:
         print(result.stdout, end="")
     return 0
@@ -423,6 +448,8 @@ def cmd_get_status_change_date(config: GitHubProjectToolsConfig, node_id: str) -
             " | .createdAt[:10]] | last"
         ),
     )
+    if (rc := check_result(result, "get-status-change-date")) is not None:
+        return rc
     out = result.stdout.strip() if result.stdout else ""
     if out and out != "null":
         print(out)
@@ -443,6 +470,8 @@ def cmd_add_to_project(config: GitHubProjectToolsConfig, node_id: str) -> int:
         {"project": project_id, "content": node_id},
         jq_filter=".data.addProjectV2ItemById.item.id",
     )
+    if (rc := check_result(result, "add-to-project")) is not None:
+        return rc
     if result.stdout:
         print(result.stdout, end="")
     return 0
@@ -466,7 +495,7 @@ def cmd_set_status(
 
     project_id = get_project_id(config)
     field_id = config.fields.status.id
-    graphql(
+    result = graphql(
         """
         mutation($project: ID!, $item: ID!, $field: ID!, $value: String!) {
           updateProjectV2ItemFieldValue(input: {
@@ -481,6 +510,8 @@ def cmd_set_status(
             "value": option_id,
         },
     )
+    if (rc := check_result(result, "set-status")) is not None:
+        return rc
     return 0
 
 
@@ -498,6 +529,8 @@ def cmd_list_status_options(config: GitHubProjectToolsConfig) -> int:
         {"id": field_id},
         jq_filter="[.data.node.options[] | {id, name}]",
     )
+    if (rc := check_result(result, "list-status-options")) is not None:
+        return rc
     if result.stdout:
         print(result.stdout, end="")
     return 0
@@ -510,7 +543,7 @@ def cmd_set_status_by_option_id(
 ) -> int:
     project_id = get_project_id(config)
     field_id = config.fields.status.id
-    graphql(
+    result = graphql(
         """
         mutation($project: ID!, $item: ID!, $field: ID!, $value: String!) {
           updateProjectV2ItemFieldValue(input: {
@@ -525,6 +558,8 @@ def cmd_set_status_by_option_id(
             "value": option_id,
         },
     )
+    if (rc := check_result(result, "set-status-by-option-id")) is not None:
+        return rc
     return 0
 
 
@@ -536,7 +571,7 @@ def cmd_set_date(
 ) -> int:
     project_id = get_project_id(config)
     date = date_value or datetime.now(UTC).date().isoformat()
-    graphql(
+    result = graphql(
         """
         mutation($project: ID!, $item: ID!, $field: ID!, $date: Date!) {
           updateProjectV2ItemFieldValue(input: {
@@ -551,6 +586,8 @@ def cmd_set_date(
             "date": date,
         },
     )
+    if (rc := check_result(result, "set-date")) is not None:
+        return rc
     return 0
 
 
@@ -568,6 +605,8 @@ def cmd_get_parent(node_id: str) -> int:
         {"id": node_id},
         jq_filter=".data.node.parent",
     )
+    if (rc := check_result(result, "get-parent")) is not None:
+        return rc
     if result.stdout:
         print(result.stdout, end="")
     return 0
@@ -586,6 +625,8 @@ def cmd_count_open_sub_issues(node_id: str) -> int:
         {"id": node_id},
         jq_filter='[.data.node.subIssues.nodes[] | select(.state == "OPEN")] | length',
     )
+    if (rc := check_result(result, "count-open-sub-issues")) is not None:
+        return rc
     if result.stdout:
         print(result.stdout, end="")
     return 0
@@ -606,6 +647,8 @@ def cmd_list_sub_issues(node_id: str) -> int:
         {"id": node_id},
         jq_filter="[.data.node.subIssues.nodes[] | {id, number, title, state}]",
     )
+    if (rc := check_result(result, "list-sub-issues")) is not None:
+        return rc
     if result.stdout:
         print(result.stdout, end="")
     return 0
@@ -622,6 +665,8 @@ def cmd_set_parent(child_id: str, parent_id: str) -> int:
         {"parent": parent_id, "child": child_id},
         jq_filter=".data.addSubIssue.subIssue.id",
     )
+    if (rc := check_result(result, "set-parent")) is not None:
+        return rc
     if result.stdout:
         print(result.stdout, end="")
     return 0
