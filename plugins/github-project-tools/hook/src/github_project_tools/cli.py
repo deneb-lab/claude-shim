@@ -376,6 +376,8 @@ def cmd_get_project_item(config: GitHubProjectToolsConfig, node_id: str) -> int:
             f'.data.node.projectItems.nodes[] | select(.project.id == "{project_id}") | .id'
         ),
     )
+    if (rc := check_result(result, "get-project-item")) is not None:
+        return rc
     if result.stdout:
         print(result.stdout, end="")
     return 0
@@ -413,6 +415,8 @@ def cmd_get_start_date(config: GitHubProjectToolsConfig, node_id: str) -> int:
             f' | select(.field.id == "{start_field_id}") | .date] | first // null)}}'
         ),
     )
+    if (rc := check_result(result, "get-start-date")) is not None:
+        return rc
     if result.stdout:
         print(result.stdout, end="")
     return 0
@@ -444,6 +448,8 @@ def cmd_get_status_change_date(config: GitHubProjectToolsConfig, node_id: str) -
             " | .createdAt[:10]] | last"
         ),
     )
+    if (rc := check_result(result, "get-status-change-date")) is not None:
+        return rc
     out = result.stdout.strip() if result.stdout else ""
     if out and out != "null":
         print(out)
@@ -464,6 +470,8 @@ def cmd_add_to_project(config: GitHubProjectToolsConfig, node_id: str) -> int:
         {"project": project_id, "content": node_id},
         jq_filter=".data.addProjectV2ItemById.item.id",
     )
+    if (rc := check_result(result, "add-to-project")) is not None:
+        return rc
     if result.stdout:
         print(result.stdout, end="")
     return 0
@@ -487,7 +495,7 @@ def cmd_set_status(
 
     project_id = get_project_id(config)
     field_id = config.fields.status.id
-    graphql(
+    result = graphql(
         """
         mutation($project: ID!, $item: ID!, $field: ID!, $value: String!) {
           updateProjectV2ItemFieldValue(input: {
@@ -502,6 +510,8 @@ def cmd_set_status(
             "value": option_id,
         },
     )
+    if (rc := check_result(result, "set-status")) is not None:
+        return rc
     return 0
 
 
@@ -519,6 +529,8 @@ def cmd_list_status_options(config: GitHubProjectToolsConfig) -> int:
         {"id": field_id},
         jq_filter="[.data.node.options[] | {id, name}]",
     )
+    if (rc := check_result(result, "list-status-options")) is not None:
+        return rc
     if result.stdout:
         print(result.stdout, end="")
     return 0
@@ -531,7 +543,7 @@ def cmd_set_status_by_option_id(
 ) -> int:
     project_id = get_project_id(config)
     field_id = config.fields.status.id
-    graphql(
+    result = graphql(
         """
         mutation($project: ID!, $item: ID!, $field: ID!, $value: String!) {
           updateProjectV2ItemFieldValue(input: {
@@ -546,6 +558,8 @@ def cmd_set_status_by_option_id(
             "value": option_id,
         },
     )
+    if (rc := check_result(result, "set-status-by-option-id")) is not None:
+        return rc
     return 0
 
 
@@ -557,7 +571,7 @@ def cmd_set_date(
 ) -> int:
     project_id = get_project_id(config)
     date = date_value or datetime.now(UTC).date().isoformat()
-    graphql(
+    result = graphql(
         """
         mutation($project: ID!, $item: ID!, $field: ID!, $date: Date!) {
           updateProjectV2ItemFieldValue(input: {
@@ -572,6 +586,8 @@ def cmd_set_date(
             "date": date,
         },
     )
+    if (rc := check_result(result, "set-date")) is not None:
+        return rc
     return 0
 
 
@@ -589,6 +605,8 @@ def cmd_get_parent(node_id: str) -> int:
         {"id": node_id},
         jq_filter=".data.node.parent",
     )
+    if (rc := check_result(result, "get-parent")) is not None:
+        return rc
     if result.stdout:
         print(result.stdout, end="")
     return 0
@@ -607,6 +625,8 @@ def cmd_count_open_sub_issues(node_id: str) -> int:
         {"id": node_id},
         jq_filter='[.data.node.subIssues.nodes[] | select(.state == "OPEN")] | length',
     )
+    if (rc := check_result(result, "count-open-sub-issues")) is not None:
+        return rc
     if result.stdout:
         print(result.stdout, end="")
     return 0
@@ -627,6 +647,8 @@ def cmd_list_sub_issues(node_id: str) -> int:
         {"id": node_id},
         jq_filter="[.data.node.subIssues.nodes[] | {id, number, title, state}]",
     )
+    if (rc := check_result(result, "list-sub-issues")) is not None:
+        return rc
     if result.stdout:
         print(result.stdout, end="")
     return 0
@@ -643,6 +665,8 @@ def cmd_set_parent(child_id: str, parent_id: str) -> int:
         {"parent": parent_id, "child": child_id},
         jq_filter=".data.addSubIssue.subIssue.id",
     )
+    if (rc := check_result(result, "set-parent")) is not None:
+        return rc
     if result.stdout:
         print(result.stdout, end="")
     return 0

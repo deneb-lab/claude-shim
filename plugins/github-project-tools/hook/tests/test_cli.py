@@ -1328,3 +1328,63 @@ class TestRunGhErrorPropagation:
         assert exit_code == 1
         err = capsys.readouterr().err
         assert "project-list" in err
+
+
+class TestGraphqlErrorPropagation:
+    """Verify graphql-based commands propagate errors."""
+
+    def test_set_status_propagates_error(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        make_config(tmp_path)
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="PVT_proj\n", stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[], returncode=1, stdout="", stderr="GraphQL error"
+                ),
+            ]
+            exit_code = main(
+                ["--repo", "owner/repo", "set-status", "PVTI_item", "done"],
+                cwd=tmp_path,
+            )
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "set-status" in err
+
+    def test_add_to_project_propagates_error(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        make_config(tmp_path)
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="PVT_proj\n", stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[], returncode=1, stdout="", stderr="mutation failed"
+                ),
+            ]
+            exit_code = main(
+                ["--repo", "owner/repo", "add-to-project", "I_node"],
+                cwd=tmp_path,
+            )
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "add-to-project" in err
+
+    def test_set_parent_propagates_error(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=1, stdout="", stderr="not found"
+            )
+            exit_code = main(
+                ["--repo", "owner/repo", "set-parent", "I_child", "I_parent"]
+            )
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "set-parent" in err
