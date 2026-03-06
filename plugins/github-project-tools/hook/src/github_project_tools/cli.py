@@ -9,6 +9,16 @@ from pathlib import Path
 from github_project_tools.config import GitHubProjectToolsConfig, load_config
 
 
+def check_result(result: subprocess.CompletedProcess[str], label: str) -> int | None:
+    """Check a subprocess result, print stderr on failure, return exit code or None."""
+    if result.returncode != 0:
+        stderr = result.stderr.strip() if result.stderr else ""
+        msg = f"{label}: {stderr}" if stderr else f"{label}: command failed"
+        print(msg, file=sys.stderr)
+        return result.returncode
+    return None
+
+
 def run_gh(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         ["gh", *args],

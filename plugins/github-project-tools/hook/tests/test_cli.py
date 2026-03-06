@@ -1223,3 +1223,45 @@ class TestIssueList:
         assert "--json" in call_args
         assert "number,projectItems" in call_args
         assert json_output in capsys.readouterr().out
+
+
+class TestCheckResult:
+    def test_returns_none_on_success(self) -> None:
+        from github_project_tools.cli import check_result
+
+        result = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout="ok\n", stderr=""
+        )
+        assert check_result(result, "test-cmd") is None
+
+    def test_returns_exit_code_on_failure(self) -> None:
+        from github_project_tools.cli import check_result
+
+        result = subprocess.CompletedProcess(
+            args=[], returncode=2, stdout="", stderr="something broke"
+        )
+        assert check_result(result, "test-cmd") == 2
+
+    def test_prints_stderr_with_label(self, capsys: pytest.CaptureFixture[str]) -> None:
+        from github_project_tools.cli import check_result
+
+        result = subprocess.CompletedProcess(
+            args=[], returncode=1, stdout="", stderr="label 'task' not found"
+        )
+        check_result(result, "issue-create")
+        err = capsys.readouterr().err
+        assert "issue-create" in err
+        assert "label 'task' not found" in err
+
+    def test_prints_generic_message_when_no_stderr(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        from github_project_tools.cli import check_result
+
+        result = subprocess.CompletedProcess(
+            args=[], returncode=1, stdout="", stderr=""
+        )
+        check_result(result, "set-status")
+        err = capsys.readouterr().err
+        assert "set-status" in err
+        assert "command failed" in err
