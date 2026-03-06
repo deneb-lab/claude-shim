@@ -37,8 +37,6 @@ The default project is auto-detected from the repo owner's GitHub projects.
    <cli> issue-create --title "<title>" --body "<body>"
    ```
 
-   If the user specified a label, add `--label "<label>"`.
-
    The output is the issue URL. Extract the issue number from the URL path.
 
 2. Get the issue node ID:
