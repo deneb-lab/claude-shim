@@ -248,9 +248,12 @@ def cmd_issue_view_full(repo: str, number: str) -> int:
     return 0
 
 
-def cmd_issue_create(repo: str, args: list[str]) -> int:
+def cmd_issue_create(
+    repo: str, args: list[str], config: GitHubProjectToolsConfig | None = None
+) -> int:
     title = ""
     body = ""
+    issue_type = ""
     i = 0
     while i < len(args):
         if args[i] == "--title":
@@ -258,6 +261,9 @@ def cmd_issue_create(repo: str, args: list[str]) -> int:
             i += 2
         elif args[i] == "--body":
             body = args[i + 1]
+            i += 2
+        elif args[i] == "--issue-type":
+            issue_type = args[i + 1]
             i += 2
         else:
             print(f"issue-create: unknown arg: {args[i]}", file=sys.stderr)
@@ -268,13 +274,58 @@ def cmd_issue_create(repo: str, args: list[str]) -> int:
     if not body:
         print("issue-create: --body required", file=sys.stderr)
         return 1
+
+    # Resolve issue type ID from config
+    type_id = ""
+    if issue_type:
+        if config is None or config.fields.issue_types is None:
+            print(
+                "issue-create: --issue-type requires issue-types in config",
+                file=sys.stderr,
+            )
+            return 1
+        for t in config.fields.issue_types:
+            if t.name.lower() == issue_type.lower():
+                type_id = t.id
+                break
+        if not type_id:
+            names = ", ".join(t.name for t in config.fields.issue_types)
+            print(
+                f"issue-create: unknown issue type '{issue_type}' (available: {names})",
+                file=sys.stderr,
+            )
+            return 1
+
     result = run_gh(
         ["issue", "create", "--repo", repo, "--title", title, "--body", body]
     )
     if (rc := check_result(result, "issue-create")) is not None:
         return rc
+    url = result.stdout.strip() if result.stdout else ""
     if result.stdout:
         print(result.stdout, end="")
+
+    # Set issue type if requested
+    if type_id and url:
+        number = url.rstrip("/").split("/")[-1]
+        node_result = run_gh(
+            ["issue", "view", number, "--repo", repo, "--json", "id", "--jq", ".id"]
+        )
+        if (rc := check_result(node_result, "issue-create (get node ID)")) is not None:
+            return rc
+        node_id = node_result.stdout.strip()
+        type_result = graphql(
+            """
+            mutation($id: ID!, $typeId: ID!) {
+              updateIssue(input: { id: $id, issueTypeId: $typeId }) {
+                issue { issueType { id name } }
+              }
+            }""",
+            {"id": node_id, "typeId": type_id},
+        )
+        if (rc := check_result(type_result, "issue-create (set type)")) is not None:
+            return rc
+
     return 0
 
 
@@ -594,6 +645,25 @@ def cmd_set_date(
 # --- Repo-only subcommands ---
 
 
+def cmd_list_issue_types(repo: str) -> int:
+    owner, name = repo.split("/", 1)
+    result = graphql(
+        """
+        query($owner: String!, $name: String!) {
+          repository(owner: $owner, name: $name) {
+            issueTypes(first: 50) { nodes { id name description } }
+          }
+        }""",
+        {"owner": owner, "name": name},
+        jq_filter="[.data.repository.issueTypes.nodes[] | {id, name, description}]",
+    )
+    if (rc := check_result(result, "list-issue-types")) is not None:
+        return rc
+    if result.stdout:
+        print(result.stdout, end="")
+    return 0
+
+
 def cmd_get_parent(node_id: str) -> int:
     result = graphql(
         """
@@ -672,6 +742,24 @@ def cmd_set_parent(child_id: str, parent_id: str) -> int:
     return 0
 
 
+def cmd_set_issue_type(node_id: str, type_id: str) -> int:
+    result = graphql(
+        """
+        mutation($id: ID!, $typeId: ID!) {
+          updateIssue(input: { id: $id, issueTypeId: $typeId }) {
+            issue { issueType { id name } }
+          }
+        }""",
+        {"id": node_id, "typeId": type_id},
+        jq_filter=".data.updateIssue.issue.issueType.name",
+    )
+    if (rc := check_result(result, "set-issue-type")) is not None:
+        return rc
+    if result.stdout:
+        print(result.stdout, end="")
+    return 0
+
+
 # --- Main dispatch ---
 
 
@@ -721,6 +809,7 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
         "issue-assign",
         "issue-get-assignees",
         "issue-list",
+        "list-issue-types",
     }
     if subcmd in issue_cmds:
         resolved_repo = detect_repo(repo)
@@ -730,7 +819,8 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
         if subcmd == "issue-view-full":
             return cmd_issue_view_full(resolved_repo, sub_args[0])
         if subcmd == "issue-create":
-            return cmd_issue_create(resolved_repo, sub_args)
+            config = load_config(working_dir)
+            return cmd_issue_create(resolved_repo, sub_args, config=config)
         if subcmd == "issue-close":
             return cmd_issue_close(resolved_repo, sub_args[0], sub_args[1:])
         if subcmd == "issue-assign":
@@ -739,6 +829,8 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
             return cmd_issue_get_assignees(resolved_repo, sub_args[0])
         if subcmd == "issue-list":
             return cmd_issue_list(resolved_repo, sub_args)
+        if subcmd == "list-issue-types":
+            return cmd_list_issue_types(resolved_repo)
 
     # Config-driven project board subcommands
     config_cmds = {
@@ -778,6 +870,7 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
         "count-open-sub-issues",
         "list-sub-issues",
         "set-parent",
+        "set-issue-type",
     }
     if subcmd in repo_only_cmds:
         if subcmd == "get-parent":
@@ -788,6 +881,8 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
             return cmd_list_sub_issues(sub_args[0])
         if subcmd == "set-parent":
             return cmd_set_parent(sub_args[0], sub_args[1])
+        if subcmd == "set-issue-type":
+            return cmd_set_issue_type(sub_args[0], sub_args[1])
 
     print(f"Unknown subcommand: {subcmd}", file=sys.stderr)
     return 1

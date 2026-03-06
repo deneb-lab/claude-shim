@@ -3,7 +3,11 @@ from pathlib import Path
 
 import pytest
 
-from github_project_tools.config import StatusField, StatusMapping, load_config
+from github_project_tools.config import (
+    StatusField,
+    StatusMapping,
+    load_config,
+)
 
 
 class TestGitHubProjectToolsConfig:
@@ -402,3 +406,162 @@ class TestStatusFieldGetDefault:
         )
         with pytest.raises(ValueError, match="Unknown status key"):
             field.get_default("invalid")
+
+
+class TestIssueTypeConfig:
+    def test_config_with_issue_types(self, tmp_path: Path) -> None:
+        config_data = {
+            "github-project-tools": {
+                "project": "https://github.com/users/testowner/projects/1",
+                "fields": {
+                    "start-date": "PVTF_start",
+                    "end-date": "PVTF_end",
+                    "status": {
+                        "id": "PVTF_status",
+                        "todo": {"name": "Todo", "option-id": "PVTO_1"},
+                        "in-progress": {
+                            "name": "In Progress",
+                            "option-id": "PVTO_2",
+                        },
+                        "done": {"name": "Done", "option-id": "PVTO_3"},
+                    },
+                    "issue-types": [
+                        {"name": "Epic", "id": "IT_epic", "default": True},
+                        {"name": "Task", "id": "IT_task"},
+                        {"name": "Bug", "id": "IT_bug"},
+                    ],
+                },
+            }
+        }
+        config_file = tmp_path / ".claude-shim.json"
+        config_file.write_text(json.dumps(config_data))
+
+        result = load_config(tmp_path)
+
+        assert result is not None
+        assert result.fields.issue_types is not None
+        assert len(result.fields.issue_types) == 3
+        assert result.fields.issue_types[0].name == "Epic"
+        assert result.fields.issue_types[0].id == "IT_epic"
+        assert result.fields.issue_types[0].default is True
+        assert result.fields.issue_types[1].name == "Task"
+        assert result.fields.issue_types[1].default is False
+
+    def test_config_without_issue_types_is_none(self, tmp_path: Path) -> None:
+        config_data = {
+            "github-project-tools": {
+                "project": "https://github.com/users/testowner/projects/1",
+                "fields": {
+                    "start-date": "PVTF_start",
+                    "end-date": "PVTF_end",
+                    "status": {
+                        "id": "PVTF_status",
+                        "todo": {"name": "Todo", "option-id": "PVTO_1"},
+                        "in-progress": {
+                            "name": "In Progress",
+                            "option-id": "PVTO_2",
+                        },
+                        "done": {"name": "Done", "option-id": "PVTO_3"},
+                    },
+                },
+            }
+        }
+        config_file = tmp_path / ".claude-shim.json"
+        config_file.write_text(json.dumps(config_data))
+
+        result = load_config(tmp_path)
+
+        assert result is not None
+        assert result.fields.issue_types is None
+
+    def test_issue_types_list_without_default_raises(self, tmp_path: Path) -> None:
+        config_data = {
+            "github-project-tools": {
+                "project": "https://github.com/users/testowner/projects/1",
+                "fields": {
+                    "start-date": "PVTF_start",
+                    "end-date": "PVTF_end",
+                    "status": {
+                        "id": "PVTF_status",
+                        "todo": {"name": "Todo", "option-id": "PVTO_1"},
+                        "in-progress": {
+                            "name": "In Progress",
+                            "option-id": "PVTO_2",
+                        },
+                        "done": {"name": "Done", "option-id": "PVTO_3"},
+                    },
+                    "issue-types": [
+                        {"name": "Epic", "id": "IT_epic"},
+                        {"name": "Task", "id": "IT_task"},
+                    ],
+                },
+            }
+        }
+        config_file = tmp_path / ".claude-shim.json"
+        config_file.write_text(json.dumps(config_data))
+
+        with pytest.raises(ValueError):
+            load_config(tmp_path)
+
+    def test_issue_types_list_with_multiple_defaults_raises(
+        self, tmp_path: Path
+    ) -> None:
+        config_data = {
+            "github-project-tools": {
+                "project": "https://github.com/users/testowner/projects/1",
+                "fields": {
+                    "start-date": "PVTF_start",
+                    "end-date": "PVTF_end",
+                    "status": {
+                        "id": "PVTF_status",
+                        "todo": {"name": "Todo", "option-id": "PVTO_1"},
+                        "in-progress": {
+                            "name": "In Progress",
+                            "option-id": "PVTO_2",
+                        },
+                        "done": {"name": "Done", "option-id": "PVTO_3"},
+                    },
+                    "issue-types": [
+                        {"name": "Epic", "id": "IT_epic", "default": True},
+                        {"name": "Task", "id": "IT_task", "default": True},
+                    ],
+                },
+            }
+        }
+        config_file = tmp_path / ".claude-shim.json"
+        config_file.write_text(json.dumps(config_data))
+
+        with pytest.raises(ValueError):
+            load_config(tmp_path)
+
+    def test_issue_types_single_item_with_default(self, tmp_path: Path) -> None:
+        config_data = {
+            "github-project-tools": {
+                "project": "https://github.com/users/testowner/projects/1",
+                "fields": {
+                    "start-date": "PVTF_start",
+                    "end-date": "PVTF_end",
+                    "status": {
+                        "id": "PVTF_status",
+                        "todo": {"name": "Todo", "option-id": "PVTO_1"},
+                        "in-progress": {
+                            "name": "In Progress",
+                            "option-id": "PVTO_2",
+                        },
+                        "done": {"name": "Done", "option-id": "PVTO_3"},
+                    },
+                    "issue-types": [
+                        {"name": "Task", "id": "IT_task", "default": True},
+                    ],
+                },
+            }
+        }
+        config_file = tmp_path / ".claude-shim.json"
+        config_file.write_text(json.dumps(config_data))
+
+        result = load_config(tmp_path)
+
+        assert result is not None
+        assert result.fields.issue_types is not None
+        assert len(result.fields.issue_types) == 1
+        assert result.fields.issue_types[0].default is True

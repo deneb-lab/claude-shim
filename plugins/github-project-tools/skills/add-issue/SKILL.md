@@ -24,6 +24,7 @@ Read the conversation context and any arguments provided. You need:
 - **Title:** A clear, concise issue title
 - **Body:** Issue description with enough detail to act on
 - **Parent (optional):** If the user mentioned a parent issue (e.g., `parent #31`, `make #31 the parent`, `parent https://github.com/owner/repo/issues/31`), extract the parent reference. Support both `#N` (same repo) and full GitHub URLs (cross-repo).
+- **Issue type (optional):** If the user specified an issue type (e.g., "Epic", "Bug", "Task"). If not specified and config has `issue-types` configured (non-null in `read-config` output), use the default type from config (the entry with `"default": true`).
 
 If the context is insufficient, ask the user for clarification.
 
@@ -33,6 +34,14 @@ The default project is auto-detected from the repo owner's GitHub projects.
 ## Phase 3: Create Issue
 
 1. Create the issue:
+
+   **If issue types are configured** (the `read-config` output contains a non-null `issue-types` field):
+   ```bash
+   <cli> issue-create --title "<title>" --body "<body>" --issue-type "<type-name>"
+   ```
+   Use the user-specified type, or the default type from config (the entry with `"default": true`).
+
+   **If issue types are not configured:**
    ```bash
    <cli> issue-create --title "<title>" --body "<body>"
    ```
