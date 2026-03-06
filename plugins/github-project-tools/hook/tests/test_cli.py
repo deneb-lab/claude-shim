@@ -32,6 +32,35 @@ def make_config(tmp_path: Path) -> dict[str, object]:
     return config_data
 
 
+def make_config_with_issue_types(tmp_path: Path) -> dict[str, object]:
+    config_data: dict[str, object] = {
+        "github-project-tools": {
+            "project": "https://github.com/users/testowner/projects/1",
+            "fields": {
+                "start-date": "PVTF_start",
+                "end-date": "PVTF_end",
+                "status": {
+                    "id": "PVTF_status",
+                    "todo": {"name": "Todo", "option-id": "PVTO_1"},
+                    "in-progress": {
+                        "name": "In Progress",
+                        "option-id": "PVTO_2",
+                    },
+                    "done": {"name": "Done", "option-id": "PVTO_3"},
+                },
+                "issue-types": [
+                    {"name": "Epic", "id": "IT_epic", "default": True},
+                    {"name": "Task", "id": "IT_task"},
+                    {"name": "Bug", "id": "IT_bug"},
+                ],
+            },
+        }
+    }
+    config_file = tmp_path / ".claude-shim.json"
+    config_file.write_text(json.dumps(config_data))
+    return config_data
+
+
 class TestReadConfig:
     def test_outputs_config_json(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
@@ -315,6 +344,202 @@ class TestIssueCreate:
             exit_code = main(["--repo", "owner/repo", "issue-create", "--title", "T"])
         assert exit_code == 1
         assert "body" in capsys.readouterr().err.lower()
+
+    def test_create_with_issue_type(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        make_config_with_issue_types(tmp_path)
+        call_count = 0
+
+        def mock_side_effect(
+            args: list[str], **kwargs: object
+        ) -> subprocess.CompletedProcess[str]:
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                # gh issue create
+                return subprocess.CompletedProcess(
+                    args=[],
+                    returncode=0,
+                    stdout="https://github.com/owner/repo/issues/42\n",
+                    stderr="",
+                )
+            if call_count == 2:
+                # gh issue view (get node ID)
+                return subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="I_node42\n", stderr=""
+                )
+            # graphql mutation (set type)
+            return subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="", stderr=""
+            )
+
+        with patch("github_project_tools.cli.run_gh", side_effect=mock_side_effect):
+            exit_code = main(
+                [
+                    "--repo",
+                    "owner/repo",
+                    "issue-create",
+                    "--title",
+                    "My Title",
+                    "--body",
+                    "My Body",
+                    "--issue-type",
+                    "Epic",
+                ],
+                cwd=tmp_path,
+            )
+        assert exit_code == 0
+        out = capsys.readouterr().out
+        assert "https://github.com/owner/repo/issues/42" in out
+
+    def test_create_with_issue_type_case_insensitive(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        make_config_with_issue_types(tmp_path)
+
+        def mock_side_effect(
+            args: list[str], **kwargs: object
+        ) -> subprocess.CompletedProcess[str]:
+            return subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout="https://github.com/owner/repo/issues/42\n",
+                stderr="",
+            )
+
+        with patch("github_project_tools.cli.run_gh", side_effect=mock_side_effect):
+            exit_code = main(
+                [
+                    "--repo",
+                    "owner/repo",
+                    "issue-create",
+                    "--title",
+                    "T",
+                    "--body",
+                    "B",
+                    "--issue-type",
+                    "epic",
+                ],
+                cwd=tmp_path,
+            )
+        assert exit_code == 0
+
+    def test_create_with_issue_type_calls_update_mutation(self, tmp_path: Path) -> None:
+        make_config_with_issue_types(tmp_path)
+        calls: list[list[str]] = []
+
+        def mock_side_effect(
+            args: list[str], **kwargs: object
+        ) -> subprocess.CompletedProcess[str]:
+            calls.append(args)
+            if len(calls) == 1:
+                return subprocess.CompletedProcess(
+                    args=[],
+                    returncode=0,
+                    stdout="https://github.com/owner/repo/issues/42\n",
+                    stderr="",
+                )
+            if len(calls) == 2:
+                return subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="I_node42\n", stderr=""
+                )
+            return subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="", stderr=""
+            )
+
+        with patch("github_project_tools.cli.run_gh", side_effect=mock_side_effect):
+            main(
+                [
+                    "--repo",
+                    "owner/repo",
+                    "issue-create",
+                    "--title",
+                    "T",
+                    "--body",
+                    "B",
+                    "--issue-type",
+                    "Task",
+                ],
+                cwd=tmp_path,
+            )
+        # Third call should be the GraphQL mutation
+        assert len(calls) == 3
+        mutation_args = " ".join(calls[2])
+        assert "id=I_node42" in mutation_args
+        assert "typeId=IT_task" in mutation_args
+
+    def test_create_with_unknown_issue_type_fails(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        make_config_with_issue_types(tmp_path)
+        with patch("github_project_tools.cli.run_gh"):
+            exit_code = main(
+                [
+                    "--repo",
+                    "owner/repo",
+                    "issue-create",
+                    "--title",
+                    "T",
+                    "--body",
+                    "B",
+                    "--issue-type",
+                    "NonExistent",
+                ],
+                cwd=tmp_path,
+            )
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "unknown issue type" in err.lower()
+
+    def test_create_with_issue_type_no_config_fails(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        # tmp_path has no .claude-shim.json
+        with patch("github_project_tools.cli.run_gh"):
+            exit_code = main(
+                [
+                    "--repo",
+                    "owner/repo",
+                    "issue-create",
+                    "--title",
+                    "T",
+                    "--body",
+                    "B",
+                    "--issue-type",
+                    "Epic",
+                ],
+                cwd=tmp_path,
+            )
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "issue-type" in err.lower()
+
+    def test_create_without_issue_type_still_works(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """Backward compat: no --issue-type means no config needed, no extra calls."""
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout="https://github.com/owner/repo/issues/99\n",
+                stderr="",
+            )
+            exit_code = main(
+                [
+                    "--repo",
+                    "owner/repo",
+                    "issue-create",
+                    "--title",
+                    "T",
+                    "--body",
+                    "B",
+                ]
+            )
+        assert exit_code == 0
+        # Only one call (gh issue create), no node ID or mutation calls
+        assert mock_run.call_count == 1
 
 
 class TestIssueAssign:
