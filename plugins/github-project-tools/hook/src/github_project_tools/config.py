@@ -49,10 +49,28 @@ class StatusField(BaseModel):
         return defaults[0]
 
 
+class IssueType(BaseModel):
+    name: str
+    id: str
+    default: bool = False
+
+
 class ProjectFields(BaseModel):
     start_date: str = Field(alias="start-date")
     end_date: str = Field(alias="end-date")
     status: StatusField
+    issue_types: list[IssueType] | None = Field(None, alias="issue-types")
+
+    @model_validator(mode="after")
+    def _check_issue_type_defaults(self) -> ProjectFields:
+        if self.issue_types is not None and len(self.issue_types) > 0:
+            defaults = [t for t in self.issue_types if t.default]
+            if len(defaults) != 1:
+                msg = (
+                    f"issue-types must have exactly one default, found {len(defaults)}"
+                )
+                raise ValueError(msg)
+        return self
 
 
 class GitHubProjectToolsConfig(BaseModel):
