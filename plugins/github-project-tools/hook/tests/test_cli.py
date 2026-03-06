@@ -1285,3 +1285,46 @@ class TestCheckResult:
         err = capsys.readouterr().err
         assert "set-status" in err
         assert "command failed" in err
+
+
+class TestRunGhErrorPropagation:
+    """Verify run_gh-based commands propagate errors."""
+
+    def test_issue_view_propagates_error(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=1, stdout="", stderr="issue not found"
+            )
+            exit_code = main(
+                ["--repo", "owner/repo", "issue-view", "999", "--json", "id"]
+            )
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "issue-view" in err
+        assert "issue not found" in err
+
+    def test_issue_assign_propagates_error(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=1, stdout="", stderr="permission denied"
+            )
+            exit_code = main(["--repo", "owner/repo", "issue-assign", "42"])
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "issue-assign" in err
+
+    def test_project_list_propagates_error(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=1, stdout="", stderr="not found"
+            )
+            exit_code = main(["project-list", "--owner", "nobody"])
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "project-list" in err

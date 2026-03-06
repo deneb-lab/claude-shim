@@ -175,6 +175,8 @@ def cmd_project_list(args: list[str]) -> int:
         print("project-list: --owner required", file=sys.stderr)
         return 1
     result = run_gh(["project", "list", "--owner", owner, "--format", "json"])
+    if (rc := check_result(result, "project-list")) is not None:
+        return rc
     if result.stdout:
         print(result.stdout, end="")
     return 0
@@ -208,6 +210,8 @@ def cmd_project_field_list(args: list[str]) -> int:
     result = run_gh(
         ["project", "field-list", number, "--owner", owner, "--format", "json"]
     )
+    if (rc := check_result(result, "project-field-list")) is not None:
+        return rc
     if result.stdout:
         print(result.stdout, end="")
     return 0
@@ -218,6 +222,8 @@ def cmd_project_field_list(args: list[str]) -> int:
 
 def cmd_issue_view(repo: str, number: str, extra_args: list[str]) -> int:
     result = run_gh(["issue", "view", number, "--repo", repo, *extra_args])
+    if (rc := check_result(result, "issue-view")) is not None:
+        return rc
     if result.stdout:
         print(result.stdout, end="")
     return 0
@@ -235,6 +241,8 @@ def cmd_issue_view_full(repo: str, number: str) -> int:
             "id,number,title,body,state",
         ]
     )
+    if (rc := check_result(result, "issue-view-full")) is not None:
+        return rc
     if result.stdout:
         print(result.stdout, end="")
     return 0
@@ -312,6 +320,8 @@ def cmd_issue_close(repo: str, number: str, args: list[str]) -> int:
 
 def cmd_issue_assign(repo: str, number: str) -> int:
     result = run_gh(["issue", "edit", number, "--repo", repo, "--add-assignee", "@me"])
+    if (rc := check_result(result, "issue-assign")) is not None:
+        return rc
     if result.stdout:
         print(result.stdout, end="")
     return 0
@@ -331,6 +341,8 @@ def cmd_issue_get_assignees(repo: str, number: str) -> int:
             "[.assignees[].login]",
         ]
     )
+    if (rc := check_result(result, "issue-get-assignees")) is not None:
+        return rc
     if result.stdout:
         print(result.stdout, end="")
     return 0
@@ -338,6 +350,8 @@ def cmd_issue_get_assignees(repo: str, number: str) -> int:
 
 def cmd_issue_list(repo: str, extra_args: list[str]) -> int:
     result = run_gh(["issue", "list", "--repo", repo, *extra_args])
+    if (rc := check_result(result, "issue-list")) is not None:
+        return rc
     if result.stdout:
         print(result.stdout, end="")
     return 0
