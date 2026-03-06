@@ -121,6 +121,22 @@ Status mappings:
 
 Ask: "Does this look right?"
 
+## Step 5.5: Detect Issue Types
+
+Query available issue types for the repository:
+```bash
+<cli> list-issue-types
+```
+
+- **If the command returns an empty array `[]`:** Tell the user: "No issue types available for this repository. Skipping issue type configuration." Proceed to Step 6.
+
+- **If issue types are returned:** Present them to the user with AskUserQuestion using `multiSelect: true`: "Which issue types should be available in the config?" List all returned types as options.
+
+  - If the user selects **one or more types**, ask which one should be the **default** (single-select AskUserQuestion). The default type is used automatically when creating issues via the `add-issue` skill.
+  - If the user selects **no types** (declines all), skip issue type configuration.
+
+Save the selections as `ISSUE_TYPES` for Step 6. Each entry has `name`, `id`, and `default` (true for exactly one).
+
 ## Step 6: Write Config
 
 Build the configuration object. **Always write status mappings as lists**, even when a stage has only one option:
@@ -141,13 +157,19 @@ Build the configuration object. **Always write status mappings as lists**, even 
           { "name": "<name>", "option-id": "<id>", "default": true },
           { "name": "<name2>", "option-id": "<id2>" }
         ]
-      }
+      },
+      "issue-types": [
+        { "name": "<name>", "id": "<id>", "default": true },
+        { "name": "<name2>", "id": "<id2>" }
+      ]
     }
   }
 }
 ```
 
 Non-default items in the list omit the `"default"` key (it defaults to `false`).
+
+**`issue-types` is optional.** Omit the key entirely if no issue types were selected in Step 5.5.
 
 Present the final config JSON to the user.
 
