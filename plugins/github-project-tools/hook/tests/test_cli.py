@@ -254,14 +254,36 @@ class TestIssueCreate:
         assert "--body" in call_args
         assert "My Body" in call_args
 
-    def test_create_with_label(self, capsys: pytest.CaptureFixture[str]) -> None:
+    def test_create_gh_failure_propagates_error(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
         with patch("github_project_tools.cli.run_gh") as mock_run:
             mock_run.return_value = subprocess.CompletedProcess(
                 args=[],
-                returncode=0,
-                stdout="https://github.com/owner/repo/issues/99\n",
-                stderr="",
+                returncode=1,
+                stdout="",
+                stderr="label 'task' not found",
             )
+            exit_code = main(
+                [
+                    "--repo",
+                    "owner/repo",
+                    "issue-create",
+                    "--title",
+                    "T",
+                    "--body",
+                    "B",
+                ]
+            )
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "issue-create" in err
+        assert "label 'task' not found" in err
+
+    def test_create_rejects_label_flag(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh"):
             exit_code = main(
                 [
                     "--repo",
@@ -275,10 +297,8 @@ class TestIssueCreate:
                     "bug",
                 ]
             )
-        assert exit_code == 0
-        call_args = mock_run.call_args[0][0]
-        assert "--label" in call_args
-        assert "bug" in call_args
+        assert exit_code == 1
+        assert "unknown arg" in capsys.readouterr().err.lower()
 
     def test_create_missing_title_exits_1(
         self, capsys: pytest.CaptureFixture[str]

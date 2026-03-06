@@ -243,7 +243,6 @@ def cmd_issue_view_full(repo: str, number: str) -> int:
 def cmd_issue_create(repo: str, args: list[str]) -> int:
     title = ""
     body = ""
-    label = ""
     i = 0
     while i < len(args):
         if args[i] == "--title":
@@ -251,9 +250,6 @@ def cmd_issue_create(repo: str, args: list[str]) -> int:
             i += 2
         elif args[i] == "--body":
             body = args[i + 1]
-            i += 2
-        elif args[i] == "--label":
-            label = args[i + 1]
             i += 2
         else:
             print(f"issue-create: unknown arg: {args[i]}", file=sys.stderr)
@@ -264,10 +260,11 @@ def cmd_issue_create(repo: str, args: list[str]) -> int:
     if not body:
         print("issue-create: --body required", file=sys.stderr)
         return 1
-    cmd = ["issue", "create", "--repo", repo, "--title", title, "--body", body]
-    if label:
-        cmd.extend(["--label", label])
-    result = run_gh(cmd)
+    result = run_gh(
+        ["issue", "create", "--repo", repo, "--title", title, "--body", body]
+    )
+    if (rc := check_result(result, "issue-create")) is not None:
+        return rc
     if result.stdout:
         print(result.stdout, end="")
     return 0
