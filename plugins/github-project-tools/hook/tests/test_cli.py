@@ -161,6 +161,32 @@ class TestReadConfig:
         exit_code = main(["read-config"], cwd=tmp_path)
         assert exit_code == 1
 
+    def test_outputs_issue_types_when_present(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        make_config_with_issue_types(tmp_path)
+
+        exit_code = main(["read-config"], cwd=tmp_path)
+
+        assert exit_code == 0
+        output = json.loads(capsys.readouterr().out)
+        assert "issue-types" in output["fields"]
+        types = output["fields"]["issue-types"]
+        assert len(types) == 3
+        assert types[0]["name"] == "Epic"
+        assert types[0]["default"] is True
+
+    def test_outputs_null_issue_types_when_absent(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        make_config(tmp_path)
+
+        exit_code = main(["read-config"], cwd=tmp_path)
+
+        assert exit_code == 0
+        output = json.loads(capsys.readouterr().out)
+        assert output["fields"]["issue-types"] is None
+
 
 class TestPreflight:
     def test_preflight_success(self, capsys: pytest.CaptureFixture[str]) -> None:
