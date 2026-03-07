@@ -262,12 +262,30 @@ def cmd_issue_create(
     i = 0
     while i < len(args):
         if args[i] == "--title":
+            if i + 1 >= len(args):
+                print(
+                    f"issue-create: --title requires an argument. {usage}",
+                    file=sys.stderr,
+                )
+                return 1
             title = args[i + 1]
             i += 2
         elif args[i] == "--body":
+            if i + 1 >= len(args):
+                print(
+                    f"issue-create: --body requires an argument. {usage}",
+                    file=sys.stderr,
+                )
+                return 1
             body = args[i + 1]
             i += 2
         elif args[i] == "--issue-type":
+            if i + 1 >= len(args):
+                print(
+                    f"issue-create: --issue-type requires an argument. {usage}",
+                    file=sys.stderr,
+                )
+                return 1
             issue_type = args[i + 1]
             i += 2
         else:
@@ -340,6 +358,12 @@ def cmd_issue_close(repo: str, number: str, args: list[str]) -> int:
     i = 0
     while i < len(args):
         if args[i] == "--comment":
+            if i + 1 >= len(args):
+                print(
+                    f"issue-close: --comment requires an argument. {usage}",
+                    file=sys.stderr,
+                )
+                return 1
             comment = args[i + 1]
             i += 2
         else:
@@ -794,6 +818,36 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
 
     subcmd = args[0]
     sub_args = args[1:]
+
+    # Validate minimum positional arguments before dispatch
+    _required_args: dict[str, tuple[int, str]] = {
+        "issue-view": (1, "Usage: issue-view <number> [extra args...]"),
+        "issue-view-full": (1, "Usage: issue-view-full <number>"),
+        "issue-close": (1, 'Usage: issue-close <number> [--comment "..."]'),
+        "issue-assign": (1, "Usage: issue-assign <number>"),
+        "issue-get-assignees": (1, "Usage: issue-get-assignees <number>"),
+        "get-project-item": (1, "Usage: get-project-item <node-id>"),
+        "get-start-date": (1, "Usage: get-start-date <node-id>"),
+        "get-status-change-date": (1, "Usage: get-status-change-date <node-id>"),
+        "add-to-project": (1, "Usage: add-to-project <node-id>"),
+        "get-parent": (1, "Usage: get-parent <node-id>"),
+        "count-open-sub-issues": (1, "Usage: count-open-sub-issues <node-id>"),
+        "list-sub-issues": (1, "Usage: list-sub-issues <node-id>"),
+        "set-status": (2, "Usage: set-status <item-id> <status-key>"),
+        "set-date": (2, "Usage: set-date <item-id> <field-id> [date]"),
+        "set-status-by-option-id": (
+            2,
+            "Usage: set-status-by-option-id <item-id> <option-id>",
+        ),
+        "set-parent": (2, "Usage: set-parent <child-id> <parent-id>"),
+        "set-issue-type": (2, "Usage: set-issue-type <node-id> <type-id>"),
+    }
+
+    if subcmd in _required_args:
+        required, usage = _required_args[subcmd]
+        if len(sub_args) < required:
+            print(f"{subcmd}: missing required arguments. {usage}", file=sys.stderr)
+            return 1
 
     if subcmd == "preflight":
         return cmd_preflight()
