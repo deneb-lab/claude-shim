@@ -159,6 +159,7 @@ def cmd_repo_detect(repo_override: str | None) -> int:
 
 
 def cmd_project_list(args: list[str]) -> int:
+    usage = "Usage: project-list --owner <owner>"
     owner = ""
     i = 0
     while i < len(args):
@@ -169,10 +170,10 @@ def cmd_project_list(args: list[str]) -> int:
             owner = args[i + 1]
             i += 2
         else:
-            print(f"project-list: unknown arg: {args[i]}", file=sys.stderr)
+            print(f"project-list: unknown arg: {args[i]}. {usage}", file=sys.stderr)
             return 1
     if not owner:
-        print("project-list: --owner required", file=sys.stderr)
+        print(f"project-list: --owner required. {usage}", file=sys.stderr)
         return 1
     result = run_gh(["project", "list", "--owner", owner, "--format", "json"])
     if (rc := check_result(result, "project-list")) is not None:
@@ -183,6 +184,7 @@ def cmd_project_list(args: list[str]) -> int:
 
 
 def cmd_project_field_list(args: list[str]) -> int:
+    usage = "Usage: project-field-list <number> --owner <owner>"
     owner = ""
     number = ""
     i = 0
@@ -199,13 +201,15 @@ def cmd_project_field_list(args: list[str]) -> int:
             number = args[i]
             i += 1
         else:
-            print(f"project-field-list: unknown arg: {args[i]}", file=sys.stderr)
+            print(
+                f"project-field-list: unknown arg: {args[i]}. {usage}", file=sys.stderr
+            )
             return 1
     if not owner:
-        print("project-field-list: --owner required", file=sys.stderr)
+        print(f"project-field-list: --owner required. {usage}", file=sys.stderr)
         return 1
     if not number:
-        print("project-field-list: project number required", file=sys.stderr)
+        print(f"project-field-list: project number required. {usage}", file=sys.stderr)
         return 1
     result = run_gh(
         ["project", "field-list", number, "--owner", owner, "--format", "json"]
@@ -251,28 +255,47 @@ def cmd_issue_view_full(repo: str, number: str) -> int:
 def cmd_issue_create(
     repo: str, args: list[str], config: GitHubProjectToolsConfig | None = None
 ) -> int:
+    usage = 'Usage: issue-create --title "..." --body "..." [--issue-type "..."]'
     title = ""
     body = ""
     issue_type = ""
     i = 0
     while i < len(args):
         if args[i] == "--title":
+            if i + 1 >= len(args):
+                print(
+                    f"issue-create: --title requires an argument. {usage}",
+                    file=sys.stderr,
+                )
+                return 1
             title = args[i + 1]
             i += 2
         elif args[i] == "--body":
+            if i + 1 >= len(args):
+                print(
+                    f"issue-create: --body requires an argument. {usage}",
+                    file=sys.stderr,
+                )
+                return 1
             body = args[i + 1]
             i += 2
         elif args[i] == "--issue-type":
+            if i + 1 >= len(args):
+                print(
+                    f"issue-create: --issue-type requires an argument. {usage}",
+                    file=sys.stderr,
+                )
+                return 1
             issue_type = args[i + 1]
             i += 2
         else:
-            print(f"issue-create: unknown arg: {args[i]}", file=sys.stderr)
+            print(f"issue-create: unknown arg: {args[i]}. {usage}", file=sys.stderr)
             return 1
     if not title:
-        print("issue-create: --title required", file=sys.stderr)
+        print(f"issue-create: --title required. {usage}", file=sys.stderr)
         return 1
     if not body:
-        print("issue-create: --body required", file=sys.stderr)
+        print(f"issue-create: --body required. {usage}", file=sys.stderr)
         return 1
 
     # Resolve issue type ID from config
@@ -330,14 +353,21 @@ def cmd_issue_create(
 
 
 def cmd_issue_close(repo: str, number: str, args: list[str]) -> int:
+    usage = 'Usage: issue-close <number> [--comment "..."]'
     comment = ""
     i = 0
     while i < len(args):
         if args[i] == "--comment":
+            if i + 1 >= len(args):
+                print(
+                    f"issue-close: --comment requires an argument. {usage}",
+                    file=sys.stderr,
+                )
+                return 1
             comment = args[i + 1]
             i += 2
         else:
-            print(f"issue-close: unknown arg: {args[i]}", file=sys.stderr)
+            print(f"issue-close: unknown arg: {args[i]}. {usage}", file=sys.stderr)
             return 1
 
     # Check current issue state
@@ -788,6 +818,36 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
 
     subcmd = args[0]
     sub_args = args[1:]
+
+    # Validate minimum positional arguments before dispatch
+    _required_args: dict[str, tuple[int, str]] = {
+        "issue-view": (1, "Usage: issue-view <number> [extra args...]"),
+        "issue-view-full": (1, "Usage: issue-view-full <number>"),
+        "issue-close": (1, 'Usage: issue-close <number> [--comment "..."]'),
+        "issue-assign": (1, "Usage: issue-assign <number>"),
+        "issue-get-assignees": (1, "Usage: issue-get-assignees <number>"),
+        "get-project-item": (1, "Usage: get-project-item <node-id>"),
+        "get-start-date": (1, "Usage: get-start-date <node-id>"),
+        "get-status-change-date": (1, "Usage: get-status-change-date <node-id>"),
+        "add-to-project": (1, "Usage: add-to-project <node-id>"),
+        "get-parent": (1, "Usage: get-parent <node-id>"),
+        "count-open-sub-issues": (1, "Usage: count-open-sub-issues <node-id>"),
+        "list-sub-issues": (1, "Usage: list-sub-issues <node-id>"),
+        "set-status": (2, "Usage: set-status <item-id> <status-key>"),
+        "set-date": (2, "Usage: set-date <item-id> <field-id> [date]"),
+        "set-status-by-option-id": (
+            2,
+            "Usage: set-status-by-option-id <item-id> <option-id>",
+        ),
+        "set-parent": (2, "Usage: set-parent <child-id> <parent-id>"),
+        "set-issue-type": (2, "Usage: set-issue-type <node-id> <type-id>"),
+    }
+
+    if subcmd in _required_args:
+        required, usage = _required_args[subcmd]
+        if len(sub_args) < required:
+            print(f"{subcmd}: missing required arguments. {usage}", file=sys.stderr)
+            return 1
 
     if subcmd == "preflight":
         return cmd_preflight()

@@ -247,6 +247,35 @@ class TestRepoDetection:
                 main(["issue-view-full", "1"])
 
 
+class TestDispatchArgValidation:
+    def test_1_arg_subcommand_missing_arg(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        exit_code = main(["issue-view"])
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "missing required arguments" in err
+        assert "Usage: issue-view" in err
+
+    def test_2_arg_subcommand_missing_all_args(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        exit_code = main(["set-parent"])
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "missing required arguments" in err
+        assert "Usage: set-parent" in err
+
+    def test_2_arg_subcommand_missing_second_arg(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        exit_code = main(["set-parent", "I_child"])
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "missing required arguments" in err
+        assert "Usage: set-parent" in err
+
+
 class TestIssueView:
     def test_issue_view_passthrough(self, capsys: pytest.CaptureFixture[str]) -> None:
         with patch("github_project_tools.cli.run_gh") as mock_run:
@@ -370,6 +399,75 @@ class TestIssueCreate:
             exit_code = main(["--repo", "owner/repo", "issue-create", "--title", "T"])
         assert exit_code == 1
         assert "body" in capsys.readouterr().err.lower()
+
+    def test_unknown_arg_shows_usage_hint(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh"):
+            exit_code = main(
+                ["--repo", "owner/repo", "issue-create", "Some title", "--body", "B"]
+            )
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "Usage: issue-create --title" in err
+
+    def test_missing_title_shows_usage_hint(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh"):
+            exit_code = main(["--repo", "owner/repo", "issue-create", "--body", "B"])
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "Usage: issue-create --title" in err
+
+    def test_missing_body_shows_usage_hint(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh"):
+            exit_code = main(["--repo", "owner/repo", "issue-create", "--title", "T"])
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "Usage: issue-create --title" in err
+
+    def test_title_flag_without_value_exits_1(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh"):
+            exit_code = main(["--repo", "owner/repo", "issue-create", "--title"])
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "--title requires an argument" in err
+
+    def test_body_flag_without_value_exits_1(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh"):
+            exit_code = main(
+                ["--repo", "owner/repo", "issue-create", "--title", "T", "--body"]
+            )
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "--body requires an argument" in err
+
+    def test_issue_type_flag_without_value_exits_1(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh"):
+            exit_code = main(
+                [
+                    "--repo",
+                    "owner/repo",
+                    "issue-create",
+                    "--title",
+                    "T",
+                    "--body",
+                    "B",
+                    "--issue-type",
+                ]
+            )
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "--issue-type requires an argument" in err
 
     def test_create_with_issue_type(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
@@ -682,6 +780,26 @@ class TestIssueClose:
             exit_code = main(["--repo", "owner/repo", "issue-close", "42"])
         assert exit_code == 1
         assert "failed" in capsys.readouterr().err.lower()
+
+    def test_unknown_arg_shows_usage_hint(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh"):
+            exit_code = main(
+                ["--repo", "owner/repo", "issue-close", "42", "--label", "bug"]
+            )
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "Usage: issue-close <number> [--comment" in err
+
+    def test_comment_flag_without_value_exits_1(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh"):
+            exit_code = main(["--repo", "owner/repo", "issue-close", "42", "--comment"])
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "--comment requires an argument" in err
 
 
 # --- Helper function tests ---
@@ -1176,6 +1294,22 @@ class TestProjectList:
         assert exit_code == 1
         assert "owner" in capsys.readouterr().err.lower()
 
+    def test_unknown_arg_shows_usage_hint(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        exit_code = main(["project-list", "unexpected"])
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "Usage: project-list --owner <owner>" in err
+
+    def test_missing_owner_shows_usage_hint(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        exit_code = main(["project-list"])
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "Usage: project-list --owner <owner>" in err
+
 
 class TestProjectFieldList:
     def test_passes_owner_number_and_format(
@@ -1209,6 +1343,30 @@ class TestProjectFieldList:
         exit_code = main(["project-field-list", "--owner", "elahti"])
         assert exit_code == 1
         assert "number" in capsys.readouterr().err.lower()
+
+    def test_unknown_arg_shows_usage_hint(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        exit_code = main(["project-field-list", "--owner", "elahti", "--bad"])
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "Usage: project-field-list <number> --owner <owner>" in err
+
+    def test_missing_owner_shows_usage_hint(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        exit_code = main(["project-field-list", "1"])
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "Usage: project-field-list <number> --owner <owner>" in err
+
+    def test_missing_number_shows_usage_hint(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        exit_code = main(["project-field-list", "--owner", "elahti"])
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "Usage: project-field-list <number> --owner <owner>" in err
 
 
 class TestIssueGetAssignees:
