@@ -184,6 +184,7 @@ def cmd_project_list(args: list[str]) -> int:
 
 
 def cmd_project_field_list(args: list[str]) -> int:
+    usage = "Usage: project-field-list <number> --owner <owner>"
     owner = ""
     number = ""
     i = 0
@@ -200,13 +201,15 @@ def cmd_project_field_list(args: list[str]) -> int:
             number = args[i]
             i += 1
         else:
-            print(f"project-field-list: unknown arg: {args[i]}", file=sys.stderr)
+            print(
+                f"project-field-list: unknown arg: {args[i]}. {usage}", file=sys.stderr
+            )
             return 1
     if not owner:
-        print("project-field-list: --owner required", file=sys.stderr)
+        print(f"project-field-list: --owner required. {usage}", file=sys.stderr)
         return 1
     if not number:
-        print("project-field-list: project number required", file=sys.stderr)
+        print(f"project-field-list: project number required. {usage}", file=sys.stderr)
         return 1
     result = run_gh(
         ["project", "field-list", number, "--owner", owner, "--format", "json"]

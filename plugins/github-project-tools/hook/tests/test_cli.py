@@ -1266,6 +1266,30 @@ class TestProjectFieldList:
         assert exit_code == 1
         assert "number" in capsys.readouterr().err.lower()
 
+    def test_unknown_arg_shows_usage_hint(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        exit_code = main(["project-field-list", "--owner", "elahti", "--bad"])
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "Usage: project-field-list <number> --owner <owner>" in err
+
+    def test_missing_owner_shows_usage_hint(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        exit_code = main(["project-field-list", "1"])
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "Usage: project-field-list <number> --owner <owner>" in err
+
+    def test_missing_number_shows_usage_hint(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        exit_code = main(["project-field-list", "--owner", "elahti"])
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "Usage: project-field-list <number> --owner <owner>" in err
+
 
 class TestIssueGetAssignees:
     def test_returns_assignee_logins(self, capsys: pytest.CaptureFixture[str]) -> None:
