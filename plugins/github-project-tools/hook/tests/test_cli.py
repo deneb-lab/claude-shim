@@ -1216,6 +1216,22 @@ class TestProjectList:
         assert exit_code == 1
         assert "owner" in capsys.readouterr().err.lower()
 
+    def test_unknown_arg_shows_usage_hint(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        exit_code = main(["project-list", "unexpected"])
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "Usage: project-list --owner <owner>" in err
+
+    def test_missing_owner_shows_usage_hint(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        exit_code = main(["project-list"])
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "Usage: project-list --owner <owner>" in err
+
 
 class TestProjectFieldList:
     def test_passes_owner_number_and_format(

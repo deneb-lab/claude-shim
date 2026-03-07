@@ -159,6 +159,7 @@ def cmd_repo_detect(repo_override: str | None) -> int:
 
 
 def cmd_project_list(args: list[str]) -> int:
+    usage = "Usage: project-list --owner <owner>"
     owner = ""
     i = 0
     while i < len(args):
@@ -169,10 +170,10 @@ def cmd_project_list(args: list[str]) -> int:
             owner = args[i + 1]
             i += 2
         else:
-            print(f"project-list: unknown arg: {args[i]}", file=sys.stderr)
+            print(f"project-list: unknown arg: {args[i]}. {usage}", file=sys.stderr)
             return 1
     if not owner:
-        print("project-list: --owner required", file=sys.stderr)
+        print(f"project-list: --owner required. {usage}", file=sys.stderr)
         return 1
     result = run_gh(["project", "list", "--owner", owner, "--format", "json"])
     if (rc := check_result(result, "project-list")) is not None:
