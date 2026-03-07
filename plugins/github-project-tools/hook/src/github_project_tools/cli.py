@@ -251,6 +251,7 @@ def cmd_issue_view_full(repo: str, number: str) -> int:
 def cmd_issue_create(
     repo: str, args: list[str], config: GitHubProjectToolsConfig | None = None
 ) -> int:
+    usage = 'Usage: issue-create --title "..." --body "..." [--issue-type "..."]'
     title = ""
     body = ""
     issue_type = ""
@@ -266,13 +267,13 @@ def cmd_issue_create(
             issue_type = args[i + 1]
             i += 2
         else:
-            print(f"issue-create: unknown arg: {args[i]}", file=sys.stderr)
+            print(f"issue-create: unknown arg: {args[i]}. {usage}", file=sys.stderr)
             return 1
     if not title:
-        print("issue-create: --title required", file=sys.stderr)
+        print(f"issue-create: --title required. {usage}", file=sys.stderr)
         return 1
     if not body:
-        print("issue-create: --body required", file=sys.stderr)
+        print(f"issue-create: --body required. {usage}", file=sys.stderr)
         return 1
 
     # Resolve issue type ID from config

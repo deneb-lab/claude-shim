@@ -371,6 +371,35 @@ class TestIssueCreate:
         assert exit_code == 1
         assert "body" in capsys.readouterr().err.lower()
 
+    def test_unknown_arg_shows_usage_hint(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh"):
+            exit_code = main(
+                ["--repo", "owner/repo", "issue-create", "Some title", "--body", "B"]
+            )
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "Usage: issue-create --title" in err
+
+    def test_missing_title_shows_usage_hint(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh"):
+            exit_code = main(["--repo", "owner/repo", "issue-create", "--body", "B"])
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "Usage: issue-create --title" in err
+
+    def test_missing_body_shows_usage_hint(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh"):
+            exit_code = main(["--repo", "owner/repo", "issue-create", "--title", "T"])
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "Usage: issue-create --title" in err
+
     def test_create_with_issue_type(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
     ) -> None:
