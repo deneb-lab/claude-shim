@@ -712,6 +712,17 @@ class TestIssueClose:
         assert exit_code == 1
         assert "failed" in capsys.readouterr().err.lower()
 
+    def test_unknown_arg_shows_usage_hint(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh"):
+            exit_code = main(
+                ["--repo", "owner/repo", "issue-close", "42", "--label", "bug"]
+            )
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "Usage: issue-close <number> [--comment" in err
+
 
 # --- Helper function tests ---
 

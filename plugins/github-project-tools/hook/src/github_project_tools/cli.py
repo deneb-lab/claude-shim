@@ -331,6 +331,7 @@ def cmd_issue_create(
 
 
 def cmd_issue_close(repo: str, number: str, args: list[str]) -> int:
+    usage = 'Usage: issue-close <number> [--comment "..."]'
     comment = ""
     i = 0
     while i < len(args):
@@ -338,7 +339,7 @@ def cmd_issue_close(repo: str, number: str, args: list[str]) -> int:
             comment = args[i + 1]
             i += 2
         else:
-            print(f"issue-close: unknown arg: {args[i]}", file=sys.stderr)
+            print(f"issue-close: unknown arg: {args[i]}. {usage}", file=sys.stderr)
             return 1
 
     # Check current issue state
