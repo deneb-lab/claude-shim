@@ -802,6 +802,81 @@ class TestIssueClose:
         assert "--comment requires an argument" in err
 
 
+class TestIssueComment:
+    def test_posts_comment(self) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="", stderr=""
+            )
+            exit_code = main(
+                [
+                    "--repo",
+                    "owner/repo",
+                    "issue-comment",
+                    "42",
+                    "--body",
+                    "Hello world",
+                ]
+            )
+        assert exit_code == 0
+        call_args = mock_run.call_args[0][0]
+        assert "issue" in call_args
+        assert "comment" in call_args
+        assert "42" in call_args
+        assert "--body" in call_args
+        assert "Hello world" in call_args
+
+    def test_failure_returns_nonzero(self, capsys: pytest.CaptureFixture[str]) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=1, stdout="", stderr="network error"
+            )
+            exit_code = main(
+                [
+                    "--repo",
+                    "owner/repo",
+                    "issue-comment",
+                    "42",
+                    "--body",
+                    "Hello",
+                ]
+            )
+        assert exit_code == 1
+        assert "failed" in capsys.readouterr().err.lower()
+
+    def test_body_required(self, capsys: pytest.CaptureFixture[str]) -> None:
+        with patch("github_project_tools.cli.run_gh"):
+            exit_code = main(["--repo", "owner/repo", "issue-comment", "42"])
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "--body required" in err
+
+    def test_body_flag_without_value_exits_1(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh"):
+            exit_code = main(["--repo", "owner/repo", "issue-comment", "42", "--body"])
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "--body requires an argument" in err
+
+    def test_unknown_arg_shows_usage(self, capsys: pytest.CaptureFixture[str]) -> None:
+        with patch("github_project_tools.cli.run_gh"):
+            exit_code = main(
+                ["--repo", "owner/repo", "issue-comment", "42", "--label", "bug"]
+            )
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "Usage: issue-comment" in err
+
+    def test_missing_number_exits_1(self, capsys: pytest.CaptureFixture[str]) -> None:
+        with patch("github_project_tools.cli.run_gh"):
+            exit_code = main(["--repo", "owner/repo", "issue-comment"])
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "missing required arguments" in err
+
+
 # --- Helper function tests ---
 
 

@@ -399,6 +399,34 @@ def cmd_issue_close(repo: str, number: str, args: list[str]) -> int:
     return 0
 
 
+def cmd_issue_comment(repo: str, number: str, args: list[str]) -> int:
+    usage = 'Usage: issue-comment <number> --body "..."'
+    body = ""
+    i = 0
+    while i < len(args):
+        if args[i] == "--body":
+            if i + 1 >= len(args):
+                print(
+                    f"issue-comment: --body requires an argument. {usage}",
+                    file=sys.stderr,
+                )
+                return 1
+            body = args[i + 1]
+            i += 2
+        else:
+            print(f"issue-comment: unknown arg: {args[i]}. {usage}", file=sys.stderr)
+            return 1
+    if not body:
+        print(f"issue-comment: --body required. {usage}", file=sys.stderr)
+        return 1
+
+    result = run_gh(["issue", "comment", number, "--repo", repo, "--body", body])
+    if result.returncode != 0:
+        print(f"issue-comment: failed to add comment to #{number}", file=sys.stderr)
+        return 1
+    return 0
+
+
 def cmd_issue_assign(repo: str, number: str) -> int:
     result = run_gh(["issue", "edit", number, "--repo", repo, "--add-assignee", "@me"])
     if (rc := check_result(result, "issue-assign")) is not None:
@@ -824,6 +852,7 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
         "issue-view": (1, "Usage: issue-view <number> [extra args...]"),
         "issue-view-full": (1, "Usage: issue-view-full <number>"),
         "issue-close": (1, 'Usage: issue-close <number> [--comment "..."]'),
+        "issue-comment": (1, 'Usage: issue-comment <number> --body "..."'),
         "issue-assign": (1, "Usage: issue-assign <number>"),
         "issue-get-assignees": (1, "Usage: issue-get-assignees <number>"),
         "get-project-item": (1, "Usage: get-project-item <node-id>"),
@@ -866,6 +895,7 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
         "issue-view-full",
         "issue-create",
         "issue-close",
+        "issue-comment",
         "issue-assign",
         "issue-get-assignees",
         "issue-list",
@@ -883,6 +913,8 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
             return cmd_issue_create(resolved_repo, sub_args, config=config)
         if subcmd == "issue-close":
             return cmd_issue_close(resolved_repo, sub_args[0], sub_args[1:])
+        if subcmd == "issue-comment":
+            return cmd_issue_comment(resolved_repo, sub_args[0], sub_args[1:])
         if subcmd == "issue-assign":
             return cmd_issue_assign(resolved_repo, sub_args[0])
         if subcmd == "issue-get-assignees":
