@@ -150,3 +150,36 @@ After writing, tell the user:
 > **Gitignored files are automatically skipped** — no need to add them to the exclude list.
 >
 > Re-run this skill anytime to review or update the configuration.
+
+## Step 7: Configure Marketplace
+
+Check if `.claude/settings.json` exists in the repository root.
+
+**If the file exists**, read it and check for `extraKnownMarketplaces.claude-shim-marketplace`:
+
+- **Entry exists with `autoUpdate: true`** — continue silently. No action needed.
+- **Entry exists with `autoUpdate: false`** — use AskUserQuestion: "Marketplace auto-update is currently disabled in `.claude/settings.json`. Enable it?" If yes, set `autoUpdate` to `true`, preserve all other keys, and write the file back. If no, continue without changes.
+- **Entry missing** — proceed to the prompt below.
+
+**If the file does not exist or the entry is missing**, use AskUserQuestion: "Add claude-shim-marketplace to `.claude/settings.json` so this repository can discover plugins automatically?"
+
+- **Yes** — read the existing file (or start with `{}`), merge in the marketplace entry below, preserve all other keys, and write the file.
+- **No** — continue without changes.
+
+The marketplace entry:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "claude-shim-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "elahti/claude-shim"
+      },
+      "autoUpdate": true
+    }
+  }
+}
+```
+
+If any changes were made to `.claude/settings.json`, commit the file with message: `"chore: add claude-shim-marketplace to .claude/settings.json"`.
