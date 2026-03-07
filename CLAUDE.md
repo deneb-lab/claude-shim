@@ -20,9 +20,10 @@ Claude Code plugin marketplace monorepo. Plugins are self-contained directories 
 
 CI runs on every push/PR (`.github/workflows/ci.yml`):
 - `shellcheck` on all `.sh` files
+- `hadolint` on CI Dockerfile
 - Shared prompt sync verification (github-project-tools)
 - JSON validation on all `.json` files
-- Python lint, typecheck, and tests (quality-check-hook)
+- Python lint, typecheck, and tests (both plugins)
 
 ## Adding a New Plugin
 

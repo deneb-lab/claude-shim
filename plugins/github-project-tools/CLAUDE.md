@@ -2,9 +2,10 @@
 
 ## Architecture
 
-- `hook/` — Python uv package (CLI + pydantic config models)
+- `hook/` — Python uv package: CLI that reads `.claude-shim.json` config (pydantic models) for use by skills
 - `skills/` — Five skills: `add-issue`, `start-implementing-issue`, `end-implementing-issue`, `mass-update-issues`, `setup-github-project-tools`
 - Each skill has a `prompts/` directory with prompt files
+- `scripts/github-project-tools.sh` — GitHub CLI wrapper for project operations
 - Configuration stored in `.claude-shim.json` (per-repository)
 
 ## Shared Prompts

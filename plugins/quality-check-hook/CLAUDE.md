@@ -3,7 +3,7 @@
 ## Architecture
 
 - `hook/` — Python package (`quality_check_hook`), the PostToolUse hook implementation
-  - `src/quality_check_hook/` — Source code (config models, main entry point)
+  - `src/quality_check_hook/` — Source code: `main.py` (entry point), `config.py` (pydantic models), `matcher.py` (file pattern matching), `runner.py` (check execution), `gitignore.py` (gitignore-aware filtering)
   - `tests/` — Pytest test suite
 - `hooks/hooks.json` — Claude Code hook registration (PostToolUse on Write/Edit/MultiEdit)
 - `scripts/setup-quality-check-hook.sh` — Setup script called by the `setup-quality-check-hook` skill
