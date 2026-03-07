@@ -713,7 +713,7 @@ def cmd_list_issue_types(repo: str) -> int:
           }
         }""",
         {"owner": owner, "name": name},
-        jq_filter="[.data.repository.issueTypes.nodes[] | {id, name, description}]",
+        jq_filter="[(.data.repository.issueTypes.nodes // [])[] | {id, name, description}]",
     )
     if (rc := check_result(result, "list-issue-types")) is not None:
         return rc
