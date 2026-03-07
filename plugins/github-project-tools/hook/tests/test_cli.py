@@ -1755,6 +1755,18 @@ class TestListIssueTypes:
         assert "owner=myowner" in call_str
         assert "name=myrepo" in call_str
 
+    def test_jq_filter_uses_null_safe_iteration(self) -> None:
+        """Verify jq filter uses // [] fallback so null issueTypes returns []."""
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="[]\n", stderr=""
+            )
+            main(["--repo", "owner/repo", "list-issue-types"])
+        call_args = mock_run.call_args[0][0]
+        jq_arg_idx = call_args.index("--jq") + 1
+        jq_filter = call_args[jq_arg_idx]
+        assert "// []" in jq_filter
+
     def test_propagates_error(self, capsys: pytest.CaptureFixture[str]) -> None:
         with patch("github_project_tools.cli.run_gh") as mock_run:
             mock_run.return_value = subprocess.CompletedProcess(
