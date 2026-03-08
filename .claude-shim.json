@@ -47,17 +47,21 @@
     "exclude": []
   },
   "github-project-tools": {
-    "repo": "elahti/deneb-marketplace",
-    "project": "https://github.com/users/elahti/projects/1",
+    "repo": "deneb-lab/deneb-marketplace",
+    "project": "https://github.com/orgs/deneb-lab/projects/1",
     "fields": {
-      "start-date": "PVTF_lAHOAC8LI84BPPkbzg9teuk",
-      "end-date": "PVTF_lAHOAC8LI84BPPkbzg9teuo",
+      "start-date": "PVTF_lADOD-Fm1s4BRGlTzg_CVrI",
+      "end-date": "PVTF_lADOD-Fm1s4BRGlTzg_CVsc",
       "status": {
-        "id": "PVTSSF_lAHOAC8LI84BPPkbzg9tWIc",
+        "id": "PVTSSF_lADOD-Fm1s4BRGlTzg_B3r0",
         "todo": [{ "name": "Todo", "option-id": "f75ad846", "default": true }],
         "in-progress": [{ "name": "In Progress", "option-id": "47fc9ee4", "default": true }],
         "done": [{ "name": "Done", "option-id": "98236657", "default": true }]
-      }
+      },
+      "issue-types": [
+        { "name": "Task", "id": "IT_kwDOD-Fm1s4B44fF", "default": true },
+        { "name": "Bug", "id": "IT_kwDOD-Fm1s4B44fG" }
+      ]
     }
   }
 }
