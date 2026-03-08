@@ -3,7 +3,7 @@ name: CI
 "on": [push, pull_request]
 jobs:
   lint:
-    runs-on: claude-shim-runner
+    runs-on: deneb-arc-runner
     container:
       image: registry.phoebe.fi/claude-shim/ci:latest
       credentials:
@@ -72,7 +72,7 @@ jobs:
           done
 
   python-lint:
-    runs-on: claude-shim-runner
+    runs-on: deneb-arc-runner
     container:
       image: registry.phoebe.fi/claude-shim/ci:latest
       credentials:
@@ -105,7 +105,7 @@ jobs:
           ruff format --check
 
   python-typecheck:
-    runs-on: claude-shim-runner
+    runs-on: deneb-arc-runner
     container:
       image: registry.phoebe.fi/claude-shim/ci:latest
       credentials:
@@ -126,7 +126,7 @@ jobs:
           plugins/github-project-tools/hook pyright
 
   python-test:
-    runs-on: claude-shim-runner
+    runs-on: deneb-arc-runner
     container:
       image: registry.phoebe.fi/claude-shim/ci:latest
       credentials:
