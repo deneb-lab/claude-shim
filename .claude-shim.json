@@ -59,8 +59,9 @@
         "done": [{ "name": "Done", "option-id": "98236657", "default": true }]
       },
       "issue-types": [
-        { "name": "Task", "id": "IT_kwDOD-Fm1s4B44fF", "default": true },
-        { "name": "Bug", "id": "IT_kwDOD-Fm1s4B44fG" }
+        { "name": "Task", "id": "IT_kwDOD-Fm1s4B44fF" },
+        { "name": "Bug", "id": "IT_kwDOD-Fm1s4B44fG" },
+        { "name": "Feature", "id": "IT_kwDOD-Fm1s4B44fH", "default": true }
       ]
     }
   }
