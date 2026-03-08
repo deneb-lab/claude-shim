@@ -33,8 +33,8 @@ CI runs on every push/PR (`.github/workflows/ci.yml`):
      "name": "<name>",
      "description": "...",
      "version": "0.1.0",
-     "author": { "name": "elahti" },
-     "repository": "https://github.com/elahti/claude-shim",
+     "author": { "name": "Esko Lahti" },
+     "repository": "https://github.com/deneb-lab/claude-shim",
      "license": "MIT",
      "keywords": [...]
    }

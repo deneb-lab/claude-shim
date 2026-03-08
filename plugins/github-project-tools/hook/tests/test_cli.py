@@ -899,7 +899,7 @@ class TestParseProjectUrl:
         from github_project_tools.cli import parse_project_url
 
         with pytest.raises(ValueError, match="Invalid project URL"):
-            parse_project_url("https://github.com/elahti/repo")
+            parse_project_url("https://github.com/deneb-lab/repo")
 
 
 class TestLoadConfigOrFail:
@@ -1353,13 +1353,13 @@ class TestProjectList:
             mock_run.return_value = subprocess.CompletedProcess(
                 args=[], returncode=0, stdout=json_output, stderr=""
             )
-            exit_code = main(["project-list", "--owner", "elahti"])
+            exit_code = main(["project-list", "--owner", "deneb-lab"])
         assert exit_code == 0
         call_args = mock_run.call_args[0][0]
         assert "project" in call_args
         assert "list" in call_args
         assert "--owner" in call_args
-        assert "elahti" in call_args
+        assert "deneb-lab" in call_args
         assert "--format" in call_args
         assert "json" in call_args
         assert json_output in capsys.readouterr().out
@@ -1397,14 +1397,14 @@ class TestProjectFieldList:
             mock_run.return_value = subprocess.CompletedProcess(
                 args=[], returncode=0, stdout=json_output, stderr=""
             )
-            exit_code = main(["project-field-list", "--owner", "elahti", "1"])
+            exit_code = main(["project-field-list", "--owner", "deneb-lab", "1"])
         assert exit_code == 0
         call_args = mock_run.call_args[0][0]
         assert "project" in call_args
         assert "field-list" in call_args
         assert "1" in call_args
         assert "--owner" in call_args
-        assert "elahti" in call_args
+        assert "deneb-lab" in call_args
         assert "--format" in call_args
         assert "json" in call_args
         assert json_output in capsys.readouterr().out
@@ -1415,14 +1415,14 @@ class TestProjectFieldList:
         assert "owner" in capsys.readouterr().err.lower()
 
     def test_missing_number_exits_1(self, capsys: pytest.CaptureFixture[str]) -> None:
-        exit_code = main(["project-field-list", "--owner", "elahti"])
+        exit_code = main(["project-field-list", "--owner", "deneb-lab"])
         assert exit_code == 1
         assert "number" in capsys.readouterr().err.lower()
 
     def test_unknown_arg_shows_usage_hint(
         self, capsys: pytest.CaptureFixture[str]
     ) -> None:
-        exit_code = main(["project-field-list", "--owner", "elahti", "--bad"])
+        exit_code = main(["project-field-list", "--owner", "deneb-lab", "--bad"])
         assert exit_code == 1
         err = capsys.readouterr().err
         assert "Usage: project-field-list <number> --owner <owner>" in err
@@ -1438,7 +1438,7 @@ class TestProjectFieldList:
     def test_missing_number_shows_usage_hint(
         self, capsys: pytest.CaptureFixture[str]
     ) -> None:
-        exit_code = main(["project-field-list", "--owner", "elahti"])
+        exit_code = main(["project-field-list", "--owner", "deneb-lab"])
         assert exit_code == 1
         err = capsys.readouterr().err
         assert "Usage: project-field-list <number> --owner <owner>" in err

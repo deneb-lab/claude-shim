@@ -362,7 +362,7 @@ The current `.claude-shim.json` has a `github-project-tools` key without `repo`.
 
 ```json
 "github-project-tools": {
-    "repo": "elahti/claude-shim",
+    "repo": "deneb-lab/claude-shim",
     "project": "https://github.com/users/elahti/projects/1",
     ...
 }

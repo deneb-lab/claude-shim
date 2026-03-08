@@ -29,7 +29,7 @@ New Step 7 added after existing Step 6.
        "claude-shim-marketplace": {
          "source": {
            "source": "github",
-           "repo": "elahti/claude-shim"
+           "repo": "deneb-lab/claude-shim"
          },
          "autoUpdate": true
        }

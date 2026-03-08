@@ -63,7 +63,7 @@ def parse_project_url(url: str) -> tuple[str, str]:
     """Parse a project URL and return (owner, project_number).
 
     Handles both user and org URLs:
-    - https://github.com/users/elahti/projects/1
+    - https://github.com/orgs/deneb-lab/projects/1
     - https://github.com/orgs/my-org/projects/42
     """
     match = re.match(r"https://github\.com/(?:users|orgs)/([^/]+)/projects/(\d+)", url)

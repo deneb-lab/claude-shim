@@ -174,7 +174,7 @@ The marketplace entry:
     "claude-shim-marketplace": {
       "source": {
         "source": "github",
-        "repo": "elahti/claude-shim"
+        "repo": "deneb-lab/claude-shim"
       },
       "autoUpdate": true
     }

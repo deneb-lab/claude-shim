@@ -3,9 +3,9 @@
   "description": "GitHub issue creation and implementation with project board lifecycle management",
   "version": "2.15.1",
   "author": {
-    "name": "elahti"
+    "name": "Esko Lahti"
   },
-  "repository": "https://github.com/elahti/claude-shim",
+  "repository": "https://github.com/deneb-lab/claude-shim",
   "license": "MIT",
   "keywords": ["github", "issues", "project-management", "automation"]
 }

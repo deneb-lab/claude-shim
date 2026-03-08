@@ -7,14 +7,14 @@ Collection of quality-of-life Claude Code hooks. Battle-tested and used in comme
 Register the marketplace in Claude Code:
 
 ```
-/plugin marketplace add elahti/claude-shim-marketplace
+/plugin marketplace add deneb-lab/claude-shim-marketplace
 ```
 
 Install plugins:
 
 ```
-/plugin add elahti/claude-shim-marketplace/quality-check-hook
-/plugin add elahti/claude-shim-marketplace/github-project-tools
+/plugin add deneb-lab/claude-shim-marketplace/quality-check-hook
+/plugin add deneb-lab/claude-shim-marketplace/github-project-tools
 ```
 
 ## Available Plugins
@@ -27,7 +27,7 @@ Config-driven quality checks for edited files. Runs automatically when Claude ed
 
 Requires [uv](https://github.com/astral-sh/uv) to be installed.
 
-Run `/quality-check-hook:setup-quality-check-hook` to auto-detect your project's tooling and generate a config. Also see claude-shim's own [.claude-shim.json](https://github.com/elahti/claude-shim/blob/main/.claude-shim.json).
+Run `/quality-check-hook:setup-quality-check-hook` to auto-detect your project's tooling and generate a config. Also see claude-shim's own [.claude-shim.json](https://github.com/deneb-lab/claude-shim/blob/main/.claude-shim.json).
 
 **Example:**
 

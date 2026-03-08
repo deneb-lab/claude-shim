@@ -46,7 +46,7 @@ git commit -m "feat(quality-check-hook): remove JSON schema file and generator"
 
 In `.claude-shim.json`, remove line 2:
 ```json
-  "$schema": "https://raw.githubusercontent.com/elahti/claude-shim/main/plugins/quality-check-hook/claude-shim.schema.json",
+  "$schema": "https://raw.githubusercontent.com/deneb-lab/claude-shim/main/plugins/quality-check-hook/claude-shim.schema.json",
 ```
 
 The file should start with:
@@ -127,7 +127,7 @@ git commit -m "docs(quality-check-hook): remove JSON schema references from CLAU
 
 In the Step 6 example config block (lines 123-135), remove the `$schema` line (line 125):
 ```json
-  "$schema": "https://raw.githubusercontent.com/elahti/claude-shim/main/plugins/quality-check-hook/claude-shim.schema.json",
+  "$schema": "https://raw.githubusercontent.com/deneb-lab/claude-shim/main/plugins/quality-check-hook/claude-shim.schema.json",
 ```
 
 The example should become:
@@ -162,7 +162,7 @@ git commit -m "feat(quality-check-hook): remove \$schema from setup skill exampl
 
 Remove line 38:
 ```json
-  "$schema": "https://raw.githubusercontent.com/elahti/claude-shim/main/plugins/quality-check-hook/claude-shim.schema.json",
+  "$schema": "https://raw.githubusercontent.com/deneb-lab/claude-shim/main/plugins/quality-check-hook/claude-shim.schema.json",
 ```
 
 The example should start with:
@@ -192,7 +192,7 @@ Delete the entire `test_schema_key_ignored` method (lines 85-98):
 ```python
     def test_schema_key_ignored(self, tmp_path: Path) -> None:
         config_data = {
-            "$schema": "https://raw.githubusercontent.com/elahti/claude-shim/main/plugins/quality-check-hook/claude-shim.schema.json",
+            "$schema": "https://raw.githubusercontent.com/deneb-lab/claude-shim/main/plugins/quality-check-hook/claude-shim.schema.json",
             "quality-checks": {
                 "include": [{"pattern": "**/*.py", "commands": ["ruff check"]}]
             },
