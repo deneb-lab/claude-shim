@@ -1,3 +1,16 @@
 {
-  "includeCoAuthoredBy": false
+  "includeCoAuthoredBy": false,
+  "extraKnownMarketplaces": {
+    "claude-shim-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "deneb-lab/claude-shim"
+      },
+      "autoUpdate": true
+    }
+  },
+  "enabledPlugins": {
+    "quality-check-hook@claude-shim-marketplace": true,
+    "github-project-tools@claude-shim-marketplace": true
+  }
 }
