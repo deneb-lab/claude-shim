@@ -71,6 +71,8 @@ The plugin auto-detects the current GitHub repository and project board.
 | `github-project-tools:add-issue` | Create a GitHub issue from conversation context and add it to the project board |
 | `github-project-tools:start-implementing-issue` | Start implementing a GitHub issue — assigns, sets dates/status, and presents issue context |
 | `github-project-tools:end-implementing-issue` | Close a GitHub issue — sets end date, done status, closes issue, updates parent lifecycle |
+| `github-project-tools:mass-update-issues` | Update an issue and all its sub-issues — sets status, dates, and close state on the project board |
+| `github-project-tools:setup-github-project-tools` | Set up or modify github-project-tools configuration in `.claude-shim.json` |
 
 ## License
 
