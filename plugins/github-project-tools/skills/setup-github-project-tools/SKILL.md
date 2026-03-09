@@ -147,8 +147,8 @@ Build the configuration object. **Always write status mappings as lists**, even 
     "repo": "<REPO>",
     "project": "<PROJECT_URL>",
     "fields": {
-      "start-date": "<START_FIELD_ID>",
-      "end-date": "<END_FIELD_ID>",
+      "start-date": { "id": "<START_FIELD_ID>", "type": "DATE" },
+      "end-date": { "id": "<END_FIELD_ID>", "type": "DATE" },
       "status": {
         "id": "<STATUS_FIELD_ID>",
         "todo": [{ "name": "<name>", "option-id": "<id>", "default": true }],

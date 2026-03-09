@@ -1,7 +1,7 @@
 {
   "name": "github-project-tools",
   "description": "GitHub issue creation and implementation with project board lifecycle management",
-  "version": "2.15.1",
+  "version": "2.16.0",
   "author": {
     "name": "Esko Lahti"
   },

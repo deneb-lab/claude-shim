@@ -678,6 +678,18 @@ def cmd_set_date(
     field_id: str,
     date_value: str | None = None,
 ) -> int:
+    # Pre-validate field type if metadata is available
+    for date_field in (config.fields.start_date, config.fields.end_date):
+        if date_field.id == field_id and date_field.type is not None:
+            if date_field.type != "DATE":
+                print(
+                    f"set-date: field {field_id} has type {date_field.type}, expected DATE. "
+                    "Re-run github-project-tools:setup-github-project-tools to refresh field IDs.",
+                    file=sys.stderr,
+                )
+                return 1
+            break
+
     project_id = get_project_id(config)
     date = date_value or datetime.now(UTC).date().isoformat()
     result = graphql(
@@ -696,6 +708,11 @@ def cmd_set_date(
         },
     )
     if (rc := check_result(result, "set-date")) is not None:
+        print(
+            "Hint: if field IDs are stale, re-run "
+            "github-project-tools:setup-github-project-tools to refresh them.",
+            file=sys.stderr,
+        )
         return rc
     return 0
 
