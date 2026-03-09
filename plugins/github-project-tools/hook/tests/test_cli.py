@@ -61,6 +61,30 @@ def make_config_with_issue_types(tmp_path: Path) -> dict[str, object]:
     return config_data
 
 
+def make_config_new_date_format(tmp_path: Path) -> dict[str, object]:
+    config_data: dict[str, object] = {
+        "github-project-tools": {
+            "project": "https://github.com/users/testowner/projects/1",
+            "fields": {
+                "start-date": {"id": "PVTF_start", "type": "DATE"},
+                "end-date": {"id": "PVTF_end", "type": "DATE"},
+                "status": {
+                    "id": "PVTF_status",
+                    "todo": {"name": "Todo", "option-id": "PVTO_1"},
+                    "in-progress": {
+                        "name": "In Progress",
+                        "option-id": "PVTO_2",
+                    },
+                    "done": {"name": "Done", "option-id": "PVTO_3"},
+                },
+            },
+        }
+    }
+    config_file = tmp_path / ".claude-shim.json"
+    config_file.write_text(json.dumps(config_data))
+    return config_data
+
+
 class TestReadConfig:
     def test_outputs_config_json(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
@@ -186,6 +210,26 @@ class TestReadConfig:
         assert exit_code == 0
         output = json.loads(capsys.readouterr().out)
         assert output["fields"]["issue-types"] is None
+
+    def test_new_date_format_parses(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        make_config_new_date_format(tmp_path)
+        exit_code = main(["read-config"], cwd=tmp_path)
+        assert exit_code == 0
+        out = json.loads(capsys.readouterr().out)
+        assert out["fields"]["start-date"] == {"id": "PVTF_start", "type": "DATE"}
+        assert out["fields"]["end-date"] == {"id": "PVTF_end", "type": "DATE"}
+
+    def test_old_string_format_normalizes(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        make_config(tmp_path)
+        exit_code = main(["read-config"], cwd=tmp_path)
+        assert exit_code == 0
+        out = json.loads(capsys.readouterr().out)
+        assert out["fields"]["start-date"] == {"id": "PVTF_start", "type": None}
+        assert out["fields"]["end-date"] == {"id": "PVTF_end", "type": None}
 
 
 class TestPreflight:

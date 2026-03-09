@@ -55,11 +55,25 @@ class IssueType(BaseModel):
     default: bool = False
 
 
+class DateField(BaseModel):
+    id: str
+    type: str | None = None
+
+
 class ProjectFields(BaseModel):
-    start_date: str = Field(alias="start-date")
-    end_date: str = Field(alias="end-date")
+    start_date: DateField = Field(alias="start-date")
+    end_date: DateField = Field(alias="end-date")
     status: StatusField
     issue_types: list[IssueType] | None = Field(None, alias="issue-types")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize_date_fields(cls, data: dict[str, object]) -> dict[str, object]:
+        for key in ("start-date", "end-date"):
+            val = data.get(key)
+            if isinstance(val, str):
+                data[key] = {"id": val, "type": None}
+        return data
 
     @model_validator(mode="after")
     def _check_issue_type_defaults(self) -> ProjectFields:
