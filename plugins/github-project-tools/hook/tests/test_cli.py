@@ -248,7 +248,7 @@ class TestPreflight:
 
 
 class TestRepoDetection:
-    def test_auto_detect_repo(self, capsys: pytest.CaptureFixture[str]) -> None:
+    def test_auto_detect_repo(self) -> None:
         with patch("github_project_tools.cli.run_gh") as mock_run:
             mock_run.side_effect = [
                 subprocess.CompletedProcess(

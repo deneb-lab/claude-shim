@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 from github_project_tools.config import (
+    DateField,
     StatusField,
     StatusMapping,
     load_config,
@@ -37,8 +38,8 @@ class TestGitHubProjectToolsConfig:
 
         assert result is not None
         assert result.project == "https://github.com/users/testowner/projects/1"
-        assert result.fields.start_date == "PVTF_start"
-        assert result.fields.end_date == "PVTF_end"
+        assert result.fields.start_date == DateField(id="PVTF_start", type=None)
+        assert result.fields.end_date == DateField(id="PVTF_end", type=None)
         assert result.fields.status.id == "PVTF_status"
         assert isinstance(result.fields.status.todo, StatusMapping)
         assert result.fields.status.todo.name == "Todo"
