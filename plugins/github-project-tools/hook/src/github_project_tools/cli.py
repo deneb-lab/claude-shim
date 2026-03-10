@@ -734,6 +734,43 @@ def cmd_set_date(
     return 0
 
 
+def cmd_clear_date(
+    config: GitHubProjectToolsConfig,
+    item_id: str,
+    field_id: str,
+) -> int:
+    # Pre-validate field type if metadata is available
+    for date_field in (config.fields.start_date, config.fields.end_date):
+        if date_field.id == field_id and date_field.type is not None:
+            if date_field.type != "DATE":
+                print(
+                    f"clear-date: field {field_id} has type {date_field.type}, expected DATE. "
+                    "Re-run github-project-tools:setup-github-project-tools to refresh field IDs.",
+                    file=sys.stderr,
+                )
+                return 1
+            break
+
+    project_id = get_project_id(config)
+    result = graphql(
+        """
+        mutation($project: ID!, $item: ID!, $field: ID!) {
+          clearProjectV2ItemFieldValue(input: {
+            projectId: $project, itemId: $item,
+            fieldId: $field
+          }) { projectV2Item { id } }
+        }""",
+        {
+            "project": project_id,
+            "item": item_id,
+            "field": field_id,
+        },
+    )
+    if (rc := check_result(result, "clear-date")) is not None:
+        return rc
+    return 0
+
+
 # --- Repo-only subcommands ---
 
 
@@ -899,6 +936,7 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
         "list-sub-issues": (1, "Usage: list-sub-issues <node-id>"),
         "set-status": (2, "Usage: set-status <item-id> <status-key>"),
         "set-date": (2, "Usage: set-date <item-id> <field-id> [date]"),
+        "clear-date": (2, "Usage: clear-date <item-id> <field-id>"),
         "set-status-by-option-id": (
             2,
             "Usage: set-status-by-option-id <item-id> <option-id>",
@@ -972,6 +1010,7 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
         "set-date",
         "list-status-options",
         "set-status-by-option-id",
+        "clear-date",
     }
     if subcmd in config_cmds:
         config = load_config_or_fail(working_dir)
@@ -993,6 +1032,8 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
             return cmd_list_status_options(config)
         if subcmd == "set-status-by-option-id":
             return cmd_set_status_by_option_id(config, sub_args[0], sub_args[1])
+        if subcmd == "clear-date":
+            return cmd_clear_date(config, sub_args[0], sub_args[1])
 
     # Repo-only subcommands (no config needed)
     repo_only_cmds = {

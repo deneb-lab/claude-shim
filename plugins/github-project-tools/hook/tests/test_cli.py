@@ -1282,6 +1282,118 @@ class TestSetDate:
         assert "setup-github-project-tools" in err
 
 
+class TestClearDate:
+    def test_clears_date_field(self, tmp_path: Path) -> None:
+        make_config(tmp_path)
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="PVT_proj\n", stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout='{"data":{}}', stderr=""
+                ),
+            ]
+            exit_code = main(
+                ["--repo", "owner/repo", "clear-date", "PVTI_item", "PVTF_start"],
+                cwd=tmp_path,
+            )
+        assert exit_code == 0
+        graphql_call = mock_run.call_args_list[1]
+        call_str = " ".join(graphql_call[0][0])
+        assert "PVTI_item" in call_str
+        assert "PVTF_start" in call_str
+
+    def test_uses_clear_mutation(self, tmp_path: Path) -> None:
+        make_config(tmp_path)
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="PVT_proj\n", stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout='{"data":{}}', stderr=""
+                ),
+            ]
+            main(
+                ["--repo", "owner/repo", "clear-date", "PVTI_item", "PVTF_start"],
+                cwd=tmp_path,
+            )
+        graphql_call = mock_run.call_args_list[1]
+        call_str = " ".join(graphql_call[0][0])
+        assert "clearProjectV2ItemFieldValue" in call_str
+
+    def test_rejects_non_date_field_type(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        config_data: dict[str, object] = {
+            "github-project-tools": {
+                "project": "https://github.com/users/testowner/projects/1",
+                "fields": {
+                    "start-date": {"id": "PVTF_start", "type": "NUMBER"},
+                    "end-date": {"id": "PVTF_end", "type": "DATE"},
+                    "status": {
+                        "id": "PVTF_status",
+                        "todo": {"name": "Todo", "option-id": "PVTO_1"},
+                        "in-progress": {
+                            "name": "In Progress",
+                            "option-id": "PVTO_2",
+                        },
+                        "done": {"name": "Done", "option-id": "PVTO_3"},
+                    },
+                },
+            }
+        }
+        (tmp_path / ".claude-shim.json").write_text(json.dumps(config_data))
+        exit_code = main(
+            ["--repo", "owner/repo", "clear-date", "PVTI_item", "PVTF_start"],
+            cwd=tmp_path,
+        )
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "NUMBER" in err
+        assert "expected DATE" in err
+
+    def test_skips_validation_when_type_is_null(self, tmp_path: Path) -> None:
+        make_config(tmp_path)
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="PVT_proj\n", stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout='{"data":{}}', stderr=""
+                ),
+            ]
+            exit_code = main(
+                ["--repo", "owner/repo", "clear-date", "PVTI_item", "PVTF_start"],
+                cwd=tmp_path,
+            )
+        assert exit_code == 0
+
+    def test_graphql_failure_returns_nonzero(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        make_config(tmp_path)
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="PVT_proj\n", stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[],
+                    returncode=1,
+                    stdout="",
+                    stderr="mutation failed",
+                ),
+            ]
+            exit_code = main(
+                ["--repo", "owner/repo", "clear-date", "PVTI_item", "PVTF_start"],
+                cwd=tmp_path,
+            )
+        assert exit_code == 1
+
+
 class TestGetProjectItem:
     def test_returns_item_id(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
