@@ -208,6 +208,17 @@ Build the configuration object. **Always write status mappings as lists**, even 
 }
 ```
 
+**Partial reconfiguration merge:** When `EXISTING_CONFIG` exists (from Step 1), start from `EXISTING_CONFIG` and replace only the sections that were reconfigured:
+
+| Option selected | Config keys replaced |
+|----------------|---------------------|
+| Repository | `repo` |
+| Project | `project`, `fields.start-date`, `fields.end-date`, `fields.status` (entire object including `id` and mappings) |
+| Status mappings | `fields.status.todo`, `fields.status.in-progress`, `fields.status.done` (preserves `fields.status.id`) |
+| Issue types | `fields.issue-types` |
+
+Keys not in the table above retain their values from `EXISTING_CONFIG`. When no existing config exists (full setup), build the entire object from scratch as shown above.
+
 Non-default items in the list omit the `"default"` key (it defaults to `false`).
 
 **`issue-types` is optional.** Omit the key entirely if no issue types were selected in Step 5.5.
