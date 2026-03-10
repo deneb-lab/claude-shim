@@ -50,8 +50,8 @@
     "repo": "deneb-lab/deneb-marketplace",
     "project": "https://github.com/orgs/deneb-lab/projects/1",
     "fields": {
-      "start-date": "PVTF_lADOD-Fm1s4BRGlTzg_CVrI",
-      "end-date": "PVTF_lADOD-Fm1s4BRGlTzg_CVsc",
+      "start-date": { "id": "PVTF_lADOD-Fm1s4BRGlTzg_CVrI", "type": "DATE" },
+      "end-date": { "id": "PVTF_lADOD-Fm1s4BRGlTzg_CVsc", "type": "DATE" },
       "status": {
         "id": "PVTSSF_lADOD-Fm1s4BRGlTzg_B3r0",
         "todo": [{ "name": "Todo", "option-id": "f75ad846", "default": true }],
