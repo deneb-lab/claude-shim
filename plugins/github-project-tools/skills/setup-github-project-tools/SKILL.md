@@ -78,7 +78,7 @@ Parse the JSON output. The `.fields` array contains objects with `name`, `id`, a
 - Start date: "Start date", "Start Date", "Start"
 - End date: "End date", "End Date", "End", "Due date", "Due Date"
 
-If auto-detection finds matches, save `START_FIELD_ID` and `END_FIELD_ID`. Confirm with the user.
+If auto-detection finds matches, save `START_FIELD_ID` and `END_FIELD_ID` from the `.id` property. These will be written as `{ "id": "<ID>", "type": "DATE" }` objects in Step 6 — NOT as plain string IDs. Confirm with the user.
 
 If auto-detection fails for either field, present the full list of date-type fields and ask the user to pick.
 
