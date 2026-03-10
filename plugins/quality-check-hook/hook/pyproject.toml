@@ -45,6 +45,8 @@ indent-style = "space"
 [tool.pyright]
 include = ["src", "tests"]
 pythonVersion = "3.12"
+venvPath = "."
+venv = ".venv"
 typeCheckingMode = "strict"
 reportMissingParameterType = "error"
 reportUnknownArgumentType = "error"
