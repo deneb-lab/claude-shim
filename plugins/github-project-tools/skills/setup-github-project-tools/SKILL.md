@@ -117,6 +117,18 @@ If no "Status" field is found, present all single-select fields and ask the user
 
 ## Step 5: Detect Status Mappings
 
+**If Step 4 was skipped** (status-only reconfiguration): The status field's `.options` array is not available from Step 4. Obtain it as follows:
+
+1. Extract `OWNER` and `PROJECT_NUMBER` from `EXISTING_CONFIG`'s `project` URL (e.g., `https://github.com/orgs/deneb-lab/projects/1` → owner `deneb-lab`, number `1`).
+2. Fetch the project's fields:
+   ```bash
+   <cli> project-field-list --owner "$OWNER" "$PROJECT_NUMBER"
+   ```
+3. Extract `STATUS_FIELD_ID` from `EXISTING_CONFIG`'s `fields.status.id`.
+4. Find the field in the response whose `.id` matches `STATUS_FIELD_ID`. Use its `.options` array for the rest of this step.
+
+**If Step 4 ran normally:** Use the `STATUS_FIELD_ID` and `.options` array already obtained in Step 4. Proceed as below.
+
 The plugin automatically updates issue status as you work — it needs to know which of your project's status options correspond to three workflow stages:
 
 - **New issues** — set when creating an issue or resetting one that was started but not completed
