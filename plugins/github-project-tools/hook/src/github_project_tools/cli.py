@@ -399,6 +399,23 @@ def cmd_issue_close(repo: str, number: str, args: list[str]) -> int:
     return 0
 
 
+def cmd_reopen_issue(repo: str, number: str) -> int:
+    state_result = run_gh(
+        ["issue", "view", number, "--repo", repo, "--json", "state", "--jq", ".state"]
+    )
+    state = state_result.stdout.strip()
+
+    if state == "OPEN":
+        print(f"Issue #{number} is already open — skipping reopen.", file=sys.stderr)
+        return 0
+
+    result = run_gh(["issue", "edit", number, "--repo", repo, "--state", "open"])
+    if result.returncode != 0:
+        print(f"reopen-issue: failed to reopen #{number}", file=sys.stderr)
+        return 1
+    return 0
+
+
 def cmd_issue_comment(repo: str, number: str, args: list[str]) -> int:
     usage = 'Usage: issue-comment <number> --body "..."'
     body = ""
@@ -869,6 +886,7 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
         "issue-view": (1, "Usage: issue-view <number> [extra args...]"),
         "issue-view-full": (1, "Usage: issue-view-full <number>"),
         "issue-close": (1, 'Usage: issue-close <number> [--comment "..."]'),
+        "reopen-issue": (1, "Usage: reopen-issue <number>"),
         "issue-comment": (1, 'Usage: issue-comment <number> --body "..."'),
         "issue-assign": (1, "Usage: issue-assign <number>"),
         "issue-get-assignees": (1, "Usage: issue-get-assignees <number>"),
@@ -912,6 +930,7 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
         "issue-view-full",
         "issue-create",
         "issue-close",
+        "reopen-issue",
         "issue-comment",
         "issue-assign",
         "issue-get-assignees",
@@ -930,6 +949,8 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
             return cmd_issue_create(resolved_repo, sub_args, config=config)
         if subcmd == "issue-close":
             return cmd_issue_close(resolved_repo, sub_args[0], sub_args[1:])
+        if subcmd == "reopen-issue":
+            return cmd_reopen_issue(resolved_repo, sub_args[0])
         if subcmd == "issue-comment":
             return cmd_issue_comment(resolved_repo, sub_args[0], sub_args[1:])
         if subcmd == "issue-assign":

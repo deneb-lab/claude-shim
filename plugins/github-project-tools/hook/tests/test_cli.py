@@ -846,6 +846,52 @@ class TestIssueClose:
         assert "--comment requires an argument" in err
 
 
+class TestIssueReopen:
+    def test_reopens_closed_issue(self) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="CLOSED\n", stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="", stderr=""
+                ),
+            ]
+            exit_code = main(["--repo", "owner/repo", "reopen-issue", "42"])
+        assert exit_code == 0
+        reopen_args = mock_run.call_args_list[1][0][0]
+        assert "edit" in reopen_args
+        assert "--state" in reopen_args
+        assert "open" in reopen_args
+
+    def test_skips_reopen_for_open_issue(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="OPEN\n", stderr=""
+            )
+            exit_code = main(["--repo", "owner/repo", "reopen-issue", "42"])
+        assert exit_code == 0
+        assert "already open" in capsys.readouterr().err.lower()
+
+    def test_reopen_failure_returns_nonzero(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="CLOSED\n", stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[], returncode=1, stdout="", stderr="network error"
+                ),
+            ]
+            exit_code = main(["--repo", "owner/repo", "reopen-issue", "42"])
+        assert exit_code == 1
+        assert "failed" in capsys.readouterr().err.lower()
+
+
 class TestIssueComment:
     def test_posts_comment(self) -> None:
         with patch("github_project_tools.cli.run_gh") as mock_run:
