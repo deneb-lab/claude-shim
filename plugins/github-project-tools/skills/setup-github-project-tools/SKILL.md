@@ -21,11 +21,40 @@ Run:
 <cli> read-config
 ```
 
-- **If the command succeeds** (exit code 0, outputs JSON): Show the user a summary of the current configuration (project URL, field names, status mappings). Ask using AskUserQuestion:
-  1. **Keep current config** — stop, no changes needed.
-  2. **Reconfigure** — proceed to Step 2, overwriting the existing config.
+- **If the command fails** (exit code 1): No existing config. Proceed to Step 2 and run all steps through Step 6.
 
-- **If the command fails** (exit code 1): Proceed directly to Step 2.
+- **If the command succeeds** (exit code 0, outputs JSON): Save the full config object as `EXISTING_CONFIG`. Show the user a summary:
+
+  ```
+  Current configuration:
+    Repo:            <repo>
+    Project:         <project URL>
+    Status mappings: <for each stage, show "Name (default), Name2" — mark the default, list others>
+    Issue types:     <comma-separated names, mark default>
+  ```
+
+  Then present a multi-select via AskUserQuestion using `multiSelect: true`: "What would you like to reconfigure?"
+
+  Options:
+  1. **Repository** (also reconfigures: project, fields, status mappings)
+  2. **Project** (also reconfigures: fields, status mappings)
+  3. **Status mappings**
+  4. **Issue types**
+
+  The user selects one or more options. Compute the union of all steps to run based on this cascade table:
+
+  | Option | Runs steps |
+  |--------|-----------|
+  | Repository | 2, 3, 4, 5 |
+  | Project | 3, 4, 5 |
+  | Status mappings | 5 |
+  | Issue types | 5.5 |
+
+  For example, selecting "Repository" and "Issue types" runs Steps 2, 3, 4, 5, and 5.5. Selecting only "Status mappings" runs Step 5 alone.
+
+  If the user selects zero options, tell them "No sections selected — config unchanged." and stop.
+
+  **For each step below (Steps 2–5.5):** only execute the step if it is in the computed set. Skip steps not in the set — their values come from `EXISTING_CONFIG`.
 
 ## Step 2: Detect Repository
 
@@ -87,6 +116,18 @@ If auto-detection fails for either field, present the full list of date-type fie
 If no "Status" field is found, present all single-select fields and ask the user to pick.
 
 ## Step 5: Detect Status Mappings
+
+**If Step 4 was skipped** (status-only reconfiguration): The status field's `.options` array is not available from Step 4. Obtain it as follows:
+
+1. Extract `OWNER` and `PROJECT_NUMBER` from `EXISTING_CONFIG`'s `project` URL (e.g., `https://github.com/orgs/deneb-lab/projects/1` → owner `deneb-lab`, number `1`).
+2. Fetch the project's fields:
+   ```bash
+   <cli> project-field-list --owner "$OWNER" "$PROJECT_NUMBER"
+   ```
+3. Extract `STATUS_FIELD_ID` from `EXISTING_CONFIG`'s `fields.status.id`.
+4. Find the field in the response whose `.id` matches `STATUS_FIELD_ID`. Use its `.options` array for the rest of this step.
+
+**If Step 4 ran normally:** Use the `STATUS_FIELD_ID` and `.options` array already obtained in Step 4. Proceed as below.
 
 The plugin automatically updates issue status as you work — it needs to know which of your project's status options correspond to three workflow stages:
 
@@ -166,6 +207,17 @@ Build the configuration object. **Always write status mappings as lists**, even 
   }
 }
 ```
+
+**Partial reconfiguration merge:** When `EXISTING_CONFIG` exists (from Step 1), start from `EXISTING_CONFIG` and replace only the sections that were reconfigured:
+
+| Option selected | Config keys replaced |
+|----------------|---------------------|
+| Repository | `repo` |
+| Project | `project`, `fields.start-date`, `fields.end-date`, `fields.status` (entire object including `id` and mappings) |
+| Status mappings | `fields.status.todo`, `fields.status.in-progress`, `fields.status.done` (preserves `fields.status.id`) |
+| Issue types | `fields.issue-types` |
+
+Keys not in the table above retain their values from `EXISTING_CONFIG`. When no existing config exists (full setup), build the entire object from scratch as shown above.
 
 Non-default items in the list omit the `"default"` key (it defaults to `false`).
 
