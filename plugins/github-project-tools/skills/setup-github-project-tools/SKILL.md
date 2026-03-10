@@ -21,11 +21,40 @@ Run:
 <cli> read-config
 ```
 
-- **If the command succeeds** (exit code 0, outputs JSON): Show the user a summary of the current configuration (project URL, field names, status mappings). Ask using AskUserQuestion:
-  1. **Keep current config** — stop, no changes needed.
-  2. **Reconfigure** — proceed to Step 2, overwriting the existing config.
+- **If the command fails** (exit code 1): No existing config. Proceed to Step 2 and run all steps through Step 6.
 
-- **If the command fails** (exit code 1): Proceed directly to Step 2.
+- **If the command succeeds** (exit code 0, outputs JSON): Save the full config object as `EXISTING_CONFIG`. Show the user a summary:
+
+  ```
+  Current configuration:
+    Repo:            <repo>
+    Project:         <project URL>
+    Status mappings: <for each stage, show "Name (default), Name2" — mark the default, list others>
+    Issue types:     <comma-separated names, mark default>
+  ```
+
+  Then present a multi-select via AskUserQuestion using `multiSelect: true`: "What would you like to reconfigure?"
+
+  Options:
+  1. **Repository** (also reconfigures: project, fields, status mappings)
+  2. **Project** (also reconfigures: fields, status mappings)
+  3. **Status mappings**
+  4. **Issue types**
+
+  The user selects one or more options. Compute the union of all steps to run based on this cascade table:
+
+  | Option | Runs steps |
+  |--------|-----------|
+  | Repository | 2, 3, 4, 5 |
+  | Project | 3, 4, 5 |
+  | Status mappings | 5 |
+  | Issue types | 5.5 |
+
+  For example, selecting "Repository" and "Issue types" runs Steps 2, 3, 4, 5, and 5.5. Selecting only "Status mappings" runs Step 5 alone.
+
+  If the user selects zero options, tell them "No sections selected — config unchanged." and stop.
+
+  **For each step below (Steps 2–5.5):** only execute the step if it is in the computed set. Skip steps not in the set — their values come from `EXISTING_CONFIG`.
 
 ## Step 2: Detect Repository
 
