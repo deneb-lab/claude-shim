@@ -47,7 +47,7 @@
     "exclude": []
   },
   "github-project-tools": {
-    "repo": "deneb-lab/deneb-marketplace",
+    "repo": "deneb-lab/claude-shim-project",
     "project": "https://github.com/orgs/deneb-lab/projects/1",
     "fields": {
       "start-date": { "id": "PVTF_lADOD-Fm1s4BRGlTzg_CVrI", "type": "DATE" },
