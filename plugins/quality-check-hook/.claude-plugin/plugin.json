@@ -1,7 +1,7 @@
 {
   "name": "quality-check-hook",
   "description": "Config-driven quality checks for edited files — formatting, linting, auto-fix via PostToolUse hooks",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "author": {
     "name": "Esko Lahti"
   },
