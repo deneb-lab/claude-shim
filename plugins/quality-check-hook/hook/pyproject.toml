@@ -9,13 +9,13 @@ dependencies = [
 
 [build-system]
 build-backend = "uv_build"
-requires = ["uv_build<0.11"]
+requires = ["uv_build==0.10.10"]
 
 [dependency-groups]
 dev = [
     "pyright==1.1.408",
     "pytest==9.0.2",
-    "ruff==0.15.5",
+    "ruff==0.15.6",
 ]
 
 [tool.ruff]
