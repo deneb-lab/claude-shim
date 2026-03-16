@@ -798,7 +798,7 @@ def cmd_get_parent(node_id: str) -> int:
         """
         query($id: ID!) {
           node(id: $id) {
-            ... on Issue { parent { id number title state } }
+            ... on Issue { parent { id number title state repository { owner { login } name } } }
           }
         }""",
         {"id": node_id},

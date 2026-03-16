@@ -56,6 +56,7 @@ Otherwise:
    - `PARENT_ID` from `.id`
    - `PARENT_NUMBER` from `.number`
    - `PARENT_TITLE` from `.title`
+   - `PARENT_REPO` from `.repository.owner.login` + `/` + `.repository.name` (e.g., `owner/repo`). The parent may be in a different repository than the current issue — always use `--repo $PARENT_REPO` for issue-number-based commands on the parent.
 
 ## Phase 2.3: Pre-Close Checks
 
@@ -175,19 +176,19 @@ Generate an optional closing comment summarizing what was implemented. This prov
 
       - If confirmed, close the parent issue (regardless of whether a project is available):
         ```bash
-        <cli> issue-close <parent_number>
+        <cli> --repo $PARENT_REPO issue-close <parent_number>
         ```
 
       - If the user declines, leave the parent as-is.
 
 4. **If a parent issue exists and was not closed in step 3**, check parent assignment:
    ```bash
-   <cli> issue-get-assignees <PARENT_NUMBER>
+   <cli> --repo $PARENT_REPO issue-get-assignees <PARENT_NUMBER>
    ```
    - If the current user is **not** in the assignees list: **Ask the user:** "Assign yourself to parent #PARENT_NUMBER (PARENT_TITLE)?"
    - If confirmed:
      ```bash
-     <cli> issue-assign <PARENT_NUMBER>
+     <cli> --repo $PARENT_REPO issue-assign <PARENT_NUMBER>
      ```
 
 5. Tell the user the issue is implemented and closed.

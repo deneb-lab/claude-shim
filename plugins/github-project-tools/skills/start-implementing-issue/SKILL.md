@@ -38,6 +38,7 @@ Follow the steps in [prompts/setup.md](prompts/setup.md).
    - `PARENT_ID` from `.id`
    - `PARENT_NUMBER` from `.number`
    - `PARENT_TITLE` from `.title`
+   - `PARENT_REPO` from `.repository.owner.login` + `/` + `.repository.name` (e.g., `owner/repo`). The parent may be in a different repository than the current issue — always use `--repo $PARENT_REPO` for issue-number-based commands on the parent.
 
 ## Phase 3: Set Start State
 
@@ -103,14 +104,14 @@ Before making any changes, note the current status of the issue (and parent if a
 
 4. **If a parent issue exists** (regardless of project board status), check parent assignment:
    ```bash
-   <cli> issue-get-assignees <PARENT_NUMBER>
+   <cli> --repo $PARENT_REPO issue-get-assignees <PARENT_NUMBER>
    ```
    - If the current user is already in the assignees list, skip.
    - If the current user is **not** in the assignees list, **ask the user:** "Assign yourself to parent #PARENT_NUMBER (PARENT_TITLE)?"
    - **Only proceed if the user confirms.**
    - If confirmed:
      ```bash
-     <cli> issue-assign <PARENT_NUMBER>
+     <cli> --repo $PARENT_REPO issue-assign <PARENT_NUMBER>
      ```
 
 5. **Set up the workspace.**

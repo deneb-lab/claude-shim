@@ -1524,13 +1524,28 @@ class TestGetParent:
             mock_run.return_value = subprocess.CompletedProcess(
                 args=[],
                 returncode=0,
-                stdout='{"id":"I_parent","number":10,"title":"Parent","state":"OPEN"}\n',
+                stdout='{"id":"I_parent","number":10,"title":"Parent","state":"OPEN","repository":{"owner":{"login":"other-org"},"name":"other-repo"}}\n',
                 stderr="",
             )
             exit_code = main(["--repo", "owner/repo", "get-parent", "I_child"])
         assert exit_code == 0
         out = capsys.readouterr().out
         assert "I_parent" in out
+
+    def test_output_includes_repository(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout='{"id":"I_parent","number":10,"title":"Parent","state":"OPEN","repository":{"owner":{"login":"other-org"},"name":"other-repo"}}\n',
+                stderr="",
+            )
+            main(["--repo", "owner/repo", "get-parent", "I_child"])
+        out = capsys.readouterr().out
+        assert '"other-org"' in out
+        assert '"other-repo"' in out
 
     def test_uses_jq_filter(self) -> None:
         with patch("github_project_tools.cli.run_gh") as mock_run:
@@ -1541,6 +1556,16 @@ class TestGetParent:
         call_args = mock_run.call_args[0][0]
         assert "--jq" in call_args
         assert ".data.node.parent" in call_args
+
+    def test_query_includes_repository_field(self) -> None:
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="{}\n", stderr=""
+            )
+            main(["--repo", "owner/repo", "get-parent", "I_child"])
+        call_args = mock_run.call_args[0][0]
+        query_str = " ".join(call_args)
+        assert "repository" in query_str
 
 
 class TestCountOpenSubIssues:
