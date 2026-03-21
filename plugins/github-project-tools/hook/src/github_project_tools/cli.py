@@ -511,7 +511,7 @@ def cmd_get_project_item(config: GitHubProjectToolsConfig, node_id: str) -> int:
 
 def cmd_get_start_date(config: GitHubProjectToolsConfig, node_id: str) -> int:
     project_id = get_project_id(config)
-    start_field_id = config.fields.start_date
+    start_field_id = config.fields.start_date.id
     result = graphql(
         """
         query($id: ID!) {

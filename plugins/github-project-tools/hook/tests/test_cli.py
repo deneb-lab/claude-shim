@@ -1476,6 +1476,43 @@ class TestGetStartDate:
         assert "fieldValues" in call_str
         assert "PVTF_start" in call_str
 
+    def test_jq_filter_uses_field_id_not_object_repr(self, tmp_path: Path) -> None:
+        """Regression: config.fields.start_date is a DateField object.
+        The jq filter must use .id (the string), not str(DateField(...))."""
+        config_data: dict[str, object] = {
+            "github-project-tools": {
+                "project": "https://github.com/users/testowner/projects/1",
+                "fields": {
+                    "start-date": {"id": "PVTF_start", "type": "DATE"},
+                    "end-date": {"id": "PVTF_end", "type": "DATE"},
+                    "status": {
+                        "id": "PVTF_status",
+                        "todo": {"name": "Todo", "option-id": "PVTO_1"},
+                        "in-progress": {
+                            "name": "In Progress",
+                            "option-id": "PVTO_2",
+                        },
+                        "done": {"name": "Done", "option-id": "PVTO_3"},
+                    },
+                },
+            }
+        }
+        (tmp_path / ".claude-shim.json").write_text(json.dumps(config_data))
+        with patch("github_project_tools.cli.run_gh") as mock_run:
+            mock_run.side_effect = [
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="PVT_proj\n", stderr=""
+                ),
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout="", stderr=""
+                ),
+            ]
+            main(["--repo", "owner/repo", "get-start-date", "I_node"], cwd=tmp_path)
+        graphql_call = mock_run.call_args_list[1]
+        call_str = " ".join(graphql_call[0][0])
+        # Must contain the bare field ID in the jq filter, not the DateField repr
+        assert 'select(.field.id == "PVTF_start")' in call_str
+
 
 class TestAddToProject:
     def test_returns_item_id(
