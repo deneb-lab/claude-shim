@@ -11,7 +11,7 @@
     "enabled": true,
     "automerge": true
   },
-  "platformAutomerge": true,
+  "minimumReleaseAge": "7 days",
   "packageRules": [
     {
       "description": "Ignore private registry images",
@@ -43,6 +43,7 @@
       "automerge": false
     }
   ],
+  "platformAutomerge": true,
   "rangeStrategy": "pin",
   "schedule": [
     "before 6am on monday"
