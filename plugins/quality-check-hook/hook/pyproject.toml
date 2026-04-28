@@ -1,21 +1,21 @@
 [project]
 name = "quality-check-hook"
 version = "0.1.0"
-requires-python = "==3.14.3"
+requires-python = "==3.14.4"
 dependencies = [
-    "pydantic==2.12.5",
+    "pydantic==2.13.3",
     "wcmatch==10.1",
 ]
 
 [build-system]
 build-backend = "uv_build"
-requires = ["uv_build==0.11.3"]
+requires = ["uv_build==0.11.7"]
 
 [dependency-groups]
 dev = [
     "pyright==1.1.408",
-    "pytest==9.0.2",
-    "ruff==0.15.9",
+    "pytest==9.0.3",
+    "ruff==0.15.11",
 ]
 
 [tool.ruff]
